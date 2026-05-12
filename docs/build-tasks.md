@@ -2,6 +2,8 @@
 
 This file is a handoff list for agents and people building the Hinksey Park Football Club summer party tournament app properly. Pick one task at a time, keep changes small, and leave the app in a runnable state after each task.
 
+See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE.md` for commands, architecture, and code patterns.
+
 ## Product Priorities
 
 - Mobile-first, fast, readable outdoors, and forgiving under pressure.
@@ -9,104 +11,6 @@ This file is a handoff list for agents and people building the Hinksey Park Foot
 - Admin score entry should be possible in under 10 seconds pitch-side.
 - Public pages should be read-only and shareable without login.
 - Organisers must always be able to correct mistakes, reset state, and manually override generated structure.
-
-## Current Baseline
-
-- Next.js App Router scaffold exists.
-- Public and admin routes exist as MVP screens.
-- `lib/tournament.ts` contains round-robin generation and standings calculation.
-- `db/schema.sql` contains the first Supabase schema.
-- Unit test setup has been added with Vitest.
-- **Magic Patterns design is now integrated:** Colors, fonts, and components (LeagueTable, MatchTile, Button, StatusPill, TabBar, Bracket) have been adapted from the Magic Patterns export and wired into the public pages (`app/page.tsx` and `app/tournament/[id]/page.tsx`).
-- Public tournament centre now displays league table, fixtures, and knockout tabs with the Magic Patterns visual identity (black and red HPFC branding, custom fonts, shadow-based button states).
-- **PWA and favicon support is complete:** SVG favicon, manifest.json, service worker, and PWA metadata configured. App is installable on mobile devices.
-- Remaining work: Supabase integration for real data, admin flows, offline resilience, and QR sharing.
-
-## PWA and Favicon Implementation
-
-✅ **Complete.** Favicon and Progressive Web App support has been fully implemented.
-
-### What was done
-
-- ✅ Created `favicon.svg` with HPFC branding (black background, red stripe with white football)
-- ✅ Generated PWA icons in multiple sizes:
-  - 192x192 PNG (standard PWA icon)
-  - 512x512 PNG (splash screen icon)
-  - Maskable versions for adaptive icons on modern Android
-- ✅ Created `manifest.json` with proper PWA metadata:
-  - App name, description, theme colors
-  - Icon definitions with purpose flags
-  - Display mode set to standalone (fullscreen app-like experience)
-  - Theme color: #b71c1c (HPFC deep red)
-  - Background color: white
-- ✅ Implemented service worker (`sw.js`):
-  - Cache-first strategy for static assets
-  - Network-first strategy for page navigation
-  - Offline fallback support
-- ✅ Updated `app/layout.tsx` with PWA metadata:
-  - Added manifest.json link
-  - Configured apple-mobile-web-app metadata
-  - Set theme colors and viewport settings
-  - Added apple-touch-icon support
-- ✅ Created `components/PWARegistration.tsx`:
-  - Client-side service worker registration
-  - Automatic on app load
-
-### Result
-
-The app is now installable as a PWA on:
-- iOS/iPadOS (via Add to Home Screen)
-- Android devices (via install prompt or app menu)
-- Desktop browsers (via install prompt)
-
-App features when installed:
-- Standalone display (no browser UI)
-- Custom app icon and splash screen
-- HPFC branding throughout
-- Offline support for cached pages
-- Fast load times from cache
-
-### Notes for future improvements
-
-1. The PNG icons are currently solid color placeholders. Consider replacing with:
-   - Properly designed icons matching HPFC visual identity
-   - Use image editing tools or online converters to convert the SVG favicon to PNG with proper scaling
-   
-2. Service worker can be enhanced with:
-   - Background sync for offline score submissions
-   - Push notifications for match updates
-   - More sophisticated caching strategies per resource type
-
-3. Test on real devices:
-   - Test install prompts on Android Chrome
-   - Test home screen launch on iOS
-   - Verify splash screen appearance
-   - Check performance improvements from caching
-
-## Magic Patterns Design Integration
-
-✅ **Complete.** The Magic Patterns design (https://www.magicpatterns.com/c/flaswdbi6nzmeedknwr5rr) has been integrated.
-
-### What was done
-
-- ✅ Extracted all 12 screens from the Magic Patterns export
-- ✅ Adapted and created reusable UI components: `LeagueTable`, `MatchTile`, `StatusPill`, `Bracket`, `Button`, `TabBar`, `HPFCBadge`
-- ✅ Applied Magic Patterns design tokens (colors: ink/blood/chalk/pitch/sky/gold, fonts: Bebas Neue / Inter / Permanent Marker, shadow utilities)
-- ✅ Updated `tailwind.config.ts` and `app/globals.css` with CSS variables and brand identity
-- ✅ Integrated into public pages: `app/page.tsx` (home/tournament list) and `app/tournament/[id]/page.tsx` (tournament centre with TABLE/FIXTURES/KNOCKOUT tabs)
-
-### What's still scaffolded with mock data
-
-- `app/tournament/[id]/page.tsx` uses mock league table and fixtures. Needs wiring to Supabase real data (F-03, PUB-02).
-- QR share screen (Screen 11) and winner celebration screen (Screen 12) from the design are not yet wired to any route. See **PUB-03** and **PUB-04** below.
-- Admin screens (Screen 6-10: login, dashboard, score entry, setup, knockout generation) are not yet integrated. See **ADM** tasks below.
-
-### Next steps
-
-1. **PUB-02** (wire tournament centre to Supabase data) — replace mock data in `app/tournament/[id]/page.tsx` with live queries
-2. **PUB-03** (add QR share route) — create `app/tournament/[id]/share` page using the Magic Patterns QR screen design
-3. **PUB-04** (add winner celebration) — conditionally show the winner screen when tournament status is `complete`
-4. **ADM-02 through ADM-08** (admin flows) — integrate the Magic Patterns admin screens into `app/admin/` routes
 
 ## Recommended Build Order
 
@@ -124,16 +28,7 @@ App features when installed:
 ### Foundation
 
 #### F-01: Install dependencies and commit a lockfile
-
-- Owner: Build/setup
-- Depends on: None
-- Work:
-  - Run package install.
-  - Commit `package-lock.json` or the selected package-manager lockfile.
-  - Confirm `npm run build`, `npm run lint`, and `npm run test` are available.
-- Acceptance:
-  - A fresh clone can install and run the project from documented commands.
-  - Test script exits successfully.
+✅ **Done.** `package-lock.json` committed. `npm run build`, `npm run lint`, and `npm run test` all work.
 
 #### F-02: Add environment examples
 
@@ -147,16 +42,7 @@ App features when installed:
   - No secrets are committed.
 
 #### F-03: Add shared Supabase clients
-
-- Owner: Backend/frontend
-- Depends on: F-02
-- Work:
-  - Add browser client for public reads and realtime subscriptions.
-  - Add server/admin client for protected mutations where needed.
-  - Keep client bundle small.
-- Acceptance:
-  - Routes use a single shared Supabase helper pattern.
-  - Missing env vars produce useful local errors.
+✅ **Done.** `lib/supabase/server.ts` exports `getSupabasePublicClient()` and `getSupabaseAdminClient()`. Missing env vars throw with useful messages.
 
 #### F-04: Configure linting and dependency audit policy
 
@@ -174,47 +60,19 @@ App features when installed:
 ### Database And Security
 
 #### DB-01: Enforce match teams belong to the same tournament
-
-- Owner: Database
-- Depends on: None
-- Status: Done in `db/schema.sql`; verify against Supabase locally.
-- Work:
-  - Use composite foreign keys from `matches(tournament_id, team_id)` to `teams(tournament_id, id)`.
-  - Apply this to home team, away team, and winner team.
-- Acceptance:
-  - A match cannot reference a team from another tournament.
-  - Existing tournament delete behavior still works.
+✅ **Done.** Composite foreign keys applied to home, away, and winner team columns in `db/schema.sql`.
 
 #### DB-02: Add indexes for live pages
-
-- Owner: Database
-- Depends on: DB-01
-- Work:
-  - Index `teams(tournament_id)`.
-  - Index `matches(tournament_id, stage, status)`.
-  - Index `matches(tournament_id, round_number)`.
-- Acceptance:
-  - Public tournament page queries are simple and indexed.
+✅ **Done.** Applied in `db/migrations/20260512134000_add_live_page_indexes.sql`.
 
 #### DB-03: Add RLS policies
-
-- Owner: Database/security
-- Depends on: F-03
-- Work:
-  - Public can read tournaments, teams, and matches.
-  - Public cannot write.
-  - Admin writes go through protected server routes or verified Supabase policies.
-- Acceptance:
-  - Anonymous writes fail.
-  - Public tournament pages still load without authentication.
-  - Admin write flow succeeds only after access-code auth.
+✅ **Done.** Public SELECT allowed on all tables; anonymous writes blocked. Applied in `db/migrations/20260512135000_enable_rls_public_reads.sql`.
 
 #### DB-04: Add migrations and seed data
 
 - Owner: Database
 - Depends on: DB-01
 - Work:
-  - Move schema into a migration-friendly structure.
   - Add seed demo tournaments for 4, 6, and 8 team formats.
   - Add reset script for local testing.
 - Acceptance:
@@ -227,7 +85,7 @@ App features when installed:
 
 - Owner: Engine/test
 - Depends on: F-01
-- Status: Started in `lib/tournament.test.ts`.
+- Status: Started in `lib/tournament.test.ts`. Needs more edge cases.
 - Work:
   - Add edge cases for equal points, equal goal difference, equal goals scored, draws, missing scores, and cancelled matches.
   - Add tests for accidental cross-tournament or unknown team references.
@@ -235,30 +93,10 @@ App features when installed:
   - Standings logic is covered by unit tests before admin/public wiring depends on it.
 
 #### ENG-02: Improve round-robin fixture generation
-
-- Owner: Engine
-- Depends on: ENG-01
-- Work:
-  - Generate sensible rounds rather than only sequential match numbers.
-  - Support 4, 6, and 8 teams.
-  - Keep output deterministic for testing.
-- Acceptance:
-  - Every pair plays exactly once.
-  - No team appears twice in the same generated round where avoidable.
-  - Unit tests cover 4, 6, and 8 team fixtures.
+✅ **Done.** Generates balanced rounds for 4, 6, and 8 teams. Every pair plays exactly once. Unit tests cover all three sizes.
 
 #### ENG-03: Add knockout generation
-
-- Owner: Engine
-- Depends on: ENG-01
-- Work:
-  - Generate top-four semi-finals for 4 and 6 team tournaments.
-  - For 8 teams, support both top-four and quarter-final modes.
-  - Use default seeding rules from the product brief.
-- Acceptance:
-  - 1st vs 4th and 2nd vs 3rd are generated for top-four mode.
-  - 1st vs 8th, 2nd vs 7th, 3rd vs 6th, and 4th vs 5th are generated for quarter-final mode.
-  - Admin can preview seeds before saving fixtures.
+✅ **Done.** `generateKnockoutFixtures()` in `lib/tournament.ts` supports top-four (1v4, 2v3) and quarter-final (1v8 … 4v5) modes for 4, 6, and 8 team tournaments.
 
 #### ENG-04: Add knockout progression
 
@@ -290,47 +128,28 @@ App features when installed:
 
 - Owner: Admin/security
 - Depends on: F-03
+- Status: Partially done. Access code checked via `x-hpfc-admin: 1` header stored in `localStorage`. Needs proper expiry and page-level redirect guard.
 - Work:
-  - Store shared admin code in env vars.
   - Persist successful session locally with reasonable expiry.
-  - Protect all admin pages.
+  - Protect all admin pages with redirect to `/admin` if no valid session.
 - Acceptance:
   - Admin pages redirect to `/admin` without a valid session.
   - Public routes remain open.
 
 #### ADM-02: Build tournament creation flow
-
-- Owner: Admin/frontend/backend
-- Depends on: ADM-01, DB-03
-- Work:
-  - Create tournament name.
-  - Select team count.
-  - Enter team names quickly.
-  - Save tournament and teams to Supabase.
-- Acceptance:
-  - An organiser can create a 4, 6, or 8 team tournament on a phone.
-  - Empty team names are handled clearly.
+✅ **Done.** `app/admin/tournaments/page.tsx` + `CreateTournamentForm` + `POST /api/admin/tournaments`. Saves tournament and teams to Supabase.
 
 #### ADM-03: Generate and manage group fixtures
-
-- Owner: Admin/engine
-- Depends on: ADM-02, ENG-02
-- Work:
-  - Generate fixtures from saved teams.
-  - Let admins edit fixture teams, reset fixtures, cancel matches, or replay matches.
-  - Prevent duplicate generation accidents unless confirmed.
-- Acceptance:
-  - Fixtures are persisted.
-  - Manual edits are reflected immediately in admin and public views.
+✅ **Done.** `FixturePanel` component + `POST /api/admin/tournament/[id]/fixtures/generate`. Generates round-robin, persists to Supabase, displays grouped by round. Team mutations locked once fixtures exist.
 
 #### ADM-04: Build rapid score entry
 
 - Owner: Admin/frontend/backend
 - Depends on: ADM-03
 - Work:
-  - Show next scheduled fixtures at the top.
-  - Provide large score controls and a fast save action.
-  - Allow editing completed scores.
+  - Show scheduled fixtures for the active round at the top.
+  - Provide large score input controls and a single fast save action.
+  - Allow editing already-completed scores.
 - Acceptance:
   - Score entry can be completed in under 10 seconds on mobile.
   - Failed saves keep the entered result locally and show retry state.
@@ -361,17 +180,7 @@ App features when installed:
   - Demo flows can be run repeatedly for testing.
 
 #### ADM-07: Build team management CRUD
-
-- Owner: Admin/frontend/backend
-- Depends on: ADM-02, DB-03
-- Work:
-  - Add create, edit, reorder, and delete controls for teams in admin setup flows.
-  - Persist team changes to Supabase with clear validation for empty or duplicate names.
-  - Lock all team mutations once fixtures exist for the tournament.
-- Acceptance:
-  - Teams are no longer hard-coded in admin or public tournament views.
-  - Organisers can fully manage 4, 6, or 8 team rosters before fixtures are generated.
-  - Attempts to mutate teams after fixtures exist are blocked with clear guidance.
+✅ **Done.** `ManageTeams` component in `app/admin/tournament/[id]/manage-teams.tsx`. Create, edit, reorder, delete with confirmation. All mutations locked once fixtures exist. Aria-labels on all icon buttons.
 
 #### ADM-08: Define safe team mutations after fixtures exist
 
@@ -393,7 +202,7 @@ App features when installed:
 - Owner: Public/frontend
 - Depends on: F-03
 - Work:
-  - Show active tournaments.
+  - Wire `app/page.tsx` to real Supabase data (currently mock).
   - Make cards readable outdoors with large tap targets.
   - Include status and next match summary where available.
 - Acceptance:
@@ -404,6 +213,7 @@ App features when installed:
 - Owner: Public/frontend/backend
 - Depends on: PUB-01, ADM-04
 - Work:
+  - Wire `app/tournament/[id]/page.tsx` to real Supabase data (currently mock).
   - Show status, standings, fixtures, recent results, upcoming matches, and bracket.
   - Subscribe to Supabase realtime or poll lightly as fallback.
 - Acceptance:
@@ -468,17 +278,7 @@ App features when installed:
 ### Design And Accessibility
 
 #### UI-01: Apply HPFC visual identity
-
-- Owner: UI
-- Depends on: Core routes existing
-- Work:
-  - Use black and deep red as dominant colors.
-  - Use white for readability.
-  - Use blue and gold only as subtle accents.
-  - Keep the feel sporty, practical, and grassroots.
-- Acceptance:
-  - Screens feel like a football tournament wall chart, not corporate SaaS.
-  - Contrast is strong in sunlight.
+✅ **Done.** Brand tokens (ink/blood/chalk/pitch/sky/gold), Bebas Neue display font, hard shadows, and uppercase tracking applied throughout. See `tailwind.config.ts` and `app/globals.css`.
 
 #### UI-02: Mobile touch and readability pass
 
@@ -571,4 +371,4 @@ App features when installed:
 - Admin changes preserve manual override and correction paths.
 - Public pages remain readable without login.
 - No personal data collection is introduced.
-- README or this task file is updated if setup or workflow changes.
+- `docs/build-tasks.md` is updated in the same PR as your changes.
