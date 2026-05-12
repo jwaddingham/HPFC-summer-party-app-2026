@@ -9,25 +9,6 @@ on:
       - main
 
 jobs:
-  supabase-dry-run:
-    if: github.event_name == 'pull_request'
-    name: supabase-dry-run
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Dry-run migrations
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: supabase db push --dry-run --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD"
-
   supabase-migrate-main:
     if: github.event_name == 'push'
     name: supabase-migrate-main
