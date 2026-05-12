@@ -70,20 +70,31 @@ function ScoreEntry({
 
   const isComplete = match.status === 'complete';
   const hasUnsavedChanges =
-   homeScore !== (match.home_score ?? 0) || awayScore !== (match.away_score ?? 0);
+    homeScore !== (match.home_score ?? 0) || awayScore !== (match.away_score ?? 0);
   const showEditState = isComplete && !hasUnsavedChanges && !saving && !saved;
+  const isCorrectingComplete =
+    isComplete && hasUnsavedChanges && !saving && !saved;
+
+  const cardBorderClass = showEditState
+    ? 'border-pitch bg-white'
+    : isCorrectingComplete
+      ? 'border-ink bg-white ring-2 ring-blood/25'
+      : 'border-ink bg-white';
+
+  const saveDisabled = saving || (isComplete && !hasUnsavedChanges);
 
   return (
-    <div className={`border-2 p-3 space-y-3 relative ${
-      isComplete
-        ? 'border-pitch bg-white'
-        : 'border-ink bg-white'
-    }`}>
-      {isComplete && (
+    <div className={`border-2 p-3 space-y-3 relative ${cardBorderClass}`}>
+      {showEditState ? (
         <div className="absolute top-2 right-2 bg-pitch rounded-full p-1" aria-hidden="true">
           <Check className="w-4 h-4 text-white" />
         </div>
-      )}
+      ) : null}
+      {isCorrectingComplete ? (
+        <p className="text-xs font-semibold text-blood uppercase tracking-wide pr-10" role="status">
+          Updating recorded result
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-2">
         <span className="font-semibold text-ink text-sm truncate">{homeTeam}</span>
         <span className="font-semibold text-ink text-sm truncate text-right">{awayTeam}</span>
@@ -133,20 +144,26 @@ function ScoreEntry({
 
       <button
         type="button"
-        disabled={saving}
+        disabled={saveDisabled}
         onClick={save}
-        className={`w-full py-3 font-display text-base uppercase tracking-wider border-2 transition-all active:translate-y-px active:translate-x-px disabled:opacity-50 flex items-center justify-center gap-2 ${
+        className={`w-full py-3 font-display text-base uppercase tracking-wider border-2 transition-all active:translate-y-px active:translate-x-px disabled:opacity-60 disabled:shadow-none disabled:active:translate-y-0 disabled:active:translate-x-0 flex items-center justify-center gap-2 ${
           saved
             ? 'bg-pitch border-pitch text-white shadow-none'
-            : 'bg-blood border-blood text-white shadow-hard active:shadow-none'
+            : showEditState
+              ? 'bg-white border-pitch text-pitch shadow-none'
+              : 'bg-blood border-blood text-white shadow-hard active:shadow-none'
         }`}
       >
         {saving ? (
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
         ) : saved ? (
           <><Check className="w-4 h-4" aria-hidden="true" /> Saved</>
+        ) : isComplete && hasUnsavedChanges ? (
+          'Update result'
+        ) : showEditState ? (
+          'Result on record'
         ) : (
-          'Save Result'
+          'Save result'
         )}
       </button>
 
