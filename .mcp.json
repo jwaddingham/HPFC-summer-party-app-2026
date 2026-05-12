@@ -1,7 +1,8 @@
 {
   "mcpServers": {
-    "magic-patterns": {
-      "url": "https://mcp.magicpatterns.com/mcp"
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=ypbsoavrjzkoqhcnmruj&read_only=true"
     }
   }
 }
