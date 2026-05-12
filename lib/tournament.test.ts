@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTable, generateKnockoutFixtures } from './tournament';
+import { buildTable, generateKnockoutFixtures, generateRoundRobin } from './tournament';
 import { Match, Team } from './types';
 
 const tournamentId = 'tournament-a';
@@ -84,6 +84,53 @@ describe('buildTable', () => {
 
     expect(byId.reds).toMatchObject({ played: 0, gf: 0, ga: 0, gd: 0, points: 0 });
     expect(byId.blues).toMatchObject({ played: 0, gf: 0, ga: 0, gd: 0, points: 0 });
+  });
+});
+
+describe('generateRoundRobin', () => {
+  it('generates every unique pairing once for 4 teams', () => {
+    const fixtures = generateRoundRobin(['t1', 't2', 't3', 't4']);
+    const pairings = new Set(fixtures.map((fixture) => [fixture.home, fixture.away].sort().join(':')));
+
+    expect(fixtures).toHaveLength(6);
+    expect(pairings.size).toBe(6);
+  });
+
+  it('groups 4-team fixtures into rounds without repeating a team within a round', () => {
+    const fixtures = generateRoundRobin(['t1', 't2', 't3', 't4']);
+
+    expect([...new Set(fixtures.map((fixture) => fixture.round))]).toEqual([1, 2, 3]);
+
+    for (const round of [1, 2, 3]) {
+      const teamsInRound = fixtures
+        .filter((fixture) => fixture.round === round)
+        .flatMap((fixture) => [fixture.home, fixture.away]);
+
+      expect(teamsInRound).toHaveLength(4);
+      expect(new Set(teamsInRound).size).toBe(4);
+    }
+  });
+
+  it('generates 15 fixtures across 5 rounds for 6 teams', () => {
+    const fixtures = generateRoundRobin(['t1', 't2', 't3', 't4', 't5', 't6']);
+
+    expect(fixtures).toHaveLength(15);
+    expect([...new Set(fixtures.map((fixture) => fixture.round))]).toEqual([1, 2, 3, 4, 5]);
+
+    for (const round of [1, 2, 3, 4, 5]) {
+      const teamsInRound = fixtures
+        .filter((fixture) => fixture.round === round)
+        .flatMap((fixture) => [fixture.home, fixture.away]);
+
+      expect(teamsInRound).toHaveLength(6);
+      expect(new Set(teamsInRound).size).toBe(6);
+    }
+  });
+
+  it('throws when team IDs are duplicated', () => {
+    expect(() => generateRoundRobin(['t1', 't2', 't2', 't4'])).toThrow(
+      'Round-robin generation requires unique team IDs.',
+    );
   });
 });
 

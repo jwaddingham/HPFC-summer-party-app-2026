@@ -1,8 +1,36 @@
 import { Match, Team } from './types';
 
 export function generateRoundRobin(teamIds: string[]) {
+  if (teamIds.length < 2) return [];
+  if (new Set(teamIds).size !== teamIds.length) {
+    throw new Error('Round-robin generation requires unique team IDs.');
+  }
+  if (teamIds.length % 2 !== 0) {
+    throw new Error('Round-robin generation requires an even number of teams.');
+  }
+
   const fixtures: Array<{ home: string; away: string; round: number }> = [];
-  for (let i = 0; i < teamIds.length; i++) for (let j = i + 1; j < teamIds.length; j++) fixtures.push({ home: teamIds[i], away: teamIds[j], round: fixtures.length + 1 });
+  const teams = [...teamIds];
+  const rounds = teams.length - 1;
+  const matchesPerRound = teams.length / 2;
+
+  for (let roundIndex = 0; roundIndex < rounds; roundIndex += 1) {
+    for (let matchIndex = 0; matchIndex < matchesPerRound; matchIndex += 1) {
+      const first = teams[matchIndex];
+      const second = teams[teams.length - 1 - matchIndex];
+      const swapHomeAway = (roundIndex + matchIndex) % 2 === 1;
+
+      fixtures.push({
+        home: swapHomeAway ? second : first,
+        away: swapHomeAway ? first : second,
+        round: roundIndex + 1,
+      });
+    }
+
+    const rotated = teams.pop();
+    if (rotated) teams.splice(1, 0, rotated);
+  }
+
   return fixtures;
 }
 
