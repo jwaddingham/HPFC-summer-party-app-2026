@@ -1,8 +1,7 @@
 // Service Worker for HPFC Tournament App
 const CACHE_NAME = 'hpfc-tournament-v1';
 const urlsToCache = [
-  '/',
-  '/offline.html'
+  '/'
 ];
 
 self.addEventListener('install', event => {
@@ -32,10 +31,7 @@ self.addEventListener('fetch', event => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .catch(() => {
-          // Fall back to offline page
-          return caches.match('/offline.html');
-        })
+        .catch(() => new Response('Offline', { status: 503, statusText: 'Service Unavailable' }))
     );
     return;
   }

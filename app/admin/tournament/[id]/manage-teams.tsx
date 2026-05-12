@@ -59,6 +59,9 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
   }
 
   async function removeTeam(teamId: string) {
+    if (!confirm('Remove this team? This action cannot be undone.')) {
+      return;
+    }
     setSaving(true);
     setError('');
     const response = await fetch(`/api/admin/tournament/${tournamentId}/teams/${teamId}`, {
@@ -102,6 +105,8 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
               onClick={() => reorder(index, index - 1)}
               disabled={locked}
               type="button"
+              aria-label="Move team up"
+              title="Move team up"
             >
               ↑
             </button>
@@ -110,6 +115,8 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
               onClick={() => reorder(index, index + 1)}
               disabled={locked}
               type="button"
+              aria-label="Move team down"
+              title="Move team down"
             >
               ↓
             </button>
@@ -118,6 +125,8 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
               onClick={() => removeTeam(team.id)}
               disabled={locked || teams.length <= 4}
               type="button"
+              aria-label="Remove team"
+              title="Remove team"
             >
               ✕
             </button>
