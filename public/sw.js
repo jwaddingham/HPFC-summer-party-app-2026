@@ -5,6 +5,11 @@ const urlsToCache = [
   '/offline.html'
 ];
 
+const OFFLINE_FALLBACK = new Response(
+  '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title></head><body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#1a1a1a;color:#fff;text-align:center;padding:20px"><div><h1>You\'re offline</h1><p style="color:#ccc">Check your connection and try again.</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:#dc2626;color:#fff;border:none;font-size:16px;font-weight:bold;cursor:pointer">Try Again</button></div></body></html>',
+  { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html' } }
+);
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -32,9 +37,7 @@ self.addEventListener('fetch', event => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .catch(() => caches.match('/offline.html')
-          .then(r => r || new Response('Offline', { status: 503, statusText: 'Service Unavailable' }))
-        )
+        .catch(() => caches.match('/offline.html').then(r => r || OFFLINE_FALLBACK.clone()))
     );
     return;
   }
@@ -60,9 +63,6 @@ self.addEventListener('fetch', event => {
           return response;
         });
       })
-      .catch(() => {
-        // Network request failed and no cache available
-        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-      })
+      .catch(() => OFFLINE_FALLBACK.clone())
   );
 });
