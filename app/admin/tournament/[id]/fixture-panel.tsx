@@ -46,6 +46,8 @@ function ScoreEntry({
     setSaved(false);
     setError('');
 
+    const wasAlreadyComplete = match.status === 'complete';
+
     const response = await fetch(
       `/api/admin/tournament/${tournamentId}/matches/${match.id}`,
       {
@@ -60,10 +62,40 @@ function ScoreEntry({
 
     if (!response.ok) {
       setError(payload.error ?? 'Could not save score.');
+      (window as any).pendo?.track('score_save_failed', {
+        tournament_id: tournamentId,
+        match_id: match.id,
+        failure_reason: payload.error ?? 'unknown',
+        is_queued_for_retry: false,
+        network_status: 'online',
+      });
       return;
     }
 
     setSaved(true);
+
+    if (wasAlreadyComplete) {
+      (window as any).pendo?.track('score_edited', {
+        tournament_id: tournamentId,
+        match_id: match.id,
+        match_stage: match.stage,
+        previous_home_score: match.home_score,
+        previous_away_score: match.away_score,
+        new_home_score: homeScore,
+        new_away_score: awayScore,
+      });
+    } else {
+      (window as any).pendo?.track('score_submitted', {
+        tournament_id: tournamentId,
+        match_id: match.id,
+        match_stage: match.stage,
+        home_score: homeScore,
+        away_score: awayScore,
+        is_draw: homeScore === awayScore,
+        round_number: match.round_number,
+      });
+    }
+
     onSaved(payload);
     setTimeout(() => setSaved(false), 2000);
   }
