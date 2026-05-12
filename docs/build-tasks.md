@@ -271,6 +271,32 @@ This file is a handoff list for agents and people building the Hinksey Park Foot
   - Reset actions require confirmation.
   - Demo flows can be run repeatedly for testing.
 
+#### ADM-07: Build team management CRUD
+
+- Owner: Admin/frontend/backend
+- Depends on: ADM-02, DB-03
+- Work:
+  - Add create, edit, reorder, and delete controls for teams in admin setup flows.
+  - Persist team changes to Supabase with clear validation for empty or duplicate names.
+  - Lock all team mutations once fixtures exist for the tournament.
+- Acceptance:
+  - Teams are no longer hard-coded in admin or public tournament views.
+  - Organisers can fully manage 4, 6, or 8 team rosters before fixtures are generated.
+  - Attempts to mutate teams after fixtures exist are blocked with clear guidance.
+
+#### ADM-08: Define safe team mutations after fixtures exist
+
+- Owner: Admin/engine/backend
+- Depends on: ADM-07, ENG-05
+- Work:
+  - Decide which post-fixture team changes are permitted (for example rename-only).
+  - Define how allowed mutations impact fixtures, standings, and knockout progression.
+  - Add confirmation UX and rollback/reset pathways for risky or destructive actions.
+- Acceptance:
+  - Organisers can understand exactly which team edits are safe after fixtures exist.
+  - Unsafe edits are blocked or routed through explicit reset/regenerate flows.
+  - Tournament integrity remains valid after any permitted mutation.
+
 ### Public Spectator Experience
 
 #### PUB-01: Build public tournament list
