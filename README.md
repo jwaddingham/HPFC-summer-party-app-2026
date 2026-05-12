@@ -22,10 +22,13 @@
 4. ✅ Admin access code route
 5. ⏳ Next: knockout generation + bracket progression + QR links + offline queue
 
+See `docs/build-tasks.md` for a handoff-ready backlog with owners, dependencies, and acceptance criteria.
+
 ## Local setup
 ```bash
 npm install
 npm run dev
+npm run test
 ```
 Set `.env.local`:
 ```bash
