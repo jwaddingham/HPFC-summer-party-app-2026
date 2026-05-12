@@ -2,6 +2,11 @@ import './globals.css';
 import Script from 'next/script';
 import { ReactNode } from 'react';
 
+export const metadata = {
+  title: 'HPFC Summer Tournament Centre',
+  description: 'Live tournament boards for the Hinksey Park FC summer party'
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
@@ -22,8 +27,8 @@ pendo.initialize({
 });
 `}</Script>
       </head>
-      <body>
-        <main className="mx-auto min-h-screen max-w-3xl p-4">{children}</main>
+      <body className="bg-gray-100 text-ink">
+        <main className="mx-auto min-h-screen max-w-2xl bg-white">{children}</main>
       </body>
     </html>
   );
