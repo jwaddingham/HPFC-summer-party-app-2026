@@ -60,41 +60,73 @@ export function CreateTournamentForm() {
   }
 
   return (
-    <div className="card space-y-3">
-      <h2 className="text-xl font-semibold">Create tournament</h2>
+    <div className="bg-white border-2 border-ink shadow-hard p-6 space-y-4">
+      <div className="mb-4">
+        <h2 className="font-display text-2xl text-ink tracking-wide mb-1">
+          New Tournament
+        </h2>
+        <p className="text-sm text-gray-600">Create a new tournament quickly</p>
+      </div>
+
       <input
-        className="input"
+        className="w-full border-2 border-ink p-3 text-lg focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
         placeholder="Tournament name"
         value={name}
         onChange={(event) => setName(event.target.value)}
+        disabled={saving}
       />
-      <div className="grid grid-cols-3 gap-2">
-        {TEAM_COUNTS.map((count) => (
-          <button
-            key={count}
-            className={`btn ${teamCount === count ? '' : 'opacity-70'}`}
-            onClick={() => updateTeamCount(count)}
-            type="button"
-          >
-            {count} teams
-          </button>
-        ))}
+
+      <div>
+        <p className="text-sm font-semibold text-ink mb-3 uppercase tracking-wider">Team count</p>
+        <div className="grid grid-cols-3 gap-2">
+          {TEAM_COUNTS.map((count) => (
+            <button
+              key={count}
+              className={`border-2 border-ink p-3 font-bold text-sm uppercase tracking-wider transition-all ${
+                teamCount === count
+                  ? 'bg-ink text-white shadow-hard-sm'
+                  : 'bg-white hover:bg-gray-50'
+              }`}
+              onClick={() => updateTeamCount(count)}
+              disabled={saving}
+              type="button"
+            >
+              {count} teams
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="space-y-2">
-        {teams.map((team, index) => (
-          <input
-            key={`team-${index + 1}`}
-            className="input"
-            placeholder={`Team ${index + 1}`}
-            value={team}
-            onChange={(event) => updateTeamName(index, event.target.value)}
-          />
-        ))}
+
+      <div>
+        <p className="text-sm font-semibold text-ink mb-3 uppercase tracking-wider">Team names</p>
+        <div className="space-y-2">
+          {teams.map((team, index) => (
+            <input
+              key={`team-${index + 1}`}
+              className="w-full border-2 border-ink p-3 focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
+              placeholder={`Team ${index + 1}`}
+              value={team}
+              onChange={(event) => updateTeamName(index, event.target.value)}
+              disabled={saving}
+            />
+          ))}
+        </div>
       </div>
-      <button className="btn w-full" disabled={saving} onClick={submit} type="button">
+
+      <button
+        className="w-full bg-blood text-white font-bold py-3 px-4 border-2 border-blood shadow-hard-blood hover:shadow-hard-blood active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider text-sm"
+        disabled={saving}
+        onClick={submit}
+        type="button"
+      >
         {saving ? 'Creating...' : 'Create tournament'}
       </button>
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
+
+      {error && (
+        <div className="bg-blood/10 border-2 border-blood p-3">
+          <p className="text-blood font-semibold text-sm">{error}</p>
+        </div>
+      )}
     </div>
   );
 }
