@@ -10,12 +10,14 @@ create table tournaments (
   knockout_mode knockout_mode not null default 'top4',
   created_at timestamptz not null default now()
 );
+
 create table teams (
   id uuid primary key default gen_random_uuid(),
   tournament_id uuid not null references tournaments(id) on delete cascade,
   name text not null,
   constraint teams_tournament_id_id_key unique (tournament_id, id)
 );
+
 create table matches (
   id uuid primary key default gen_random_uuid(),
   tournament_id uuid not null references tournaments(id) on delete cascade,
@@ -36,29 +38,3 @@ create table matches (
     and (away_score is null or away_score >= 0)
   )
 );
-
-create index teams_tournament_id_idx on teams (tournament_id);
-create index matches_tournament_stage_status_idx on matches (tournament_id, stage, status);
-create index matches_tournament_round_number_idx on matches (tournament_id, round_number);
-
-alter table tournaments enable row level security;
-alter table teams enable row level security;
-alter table matches enable row level security;
-
-drop policy if exists "public read tournaments" on tournaments;
-create policy "public read tournaments"
-  on tournaments for select
-  to anon, authenticated
-  using (true);
-
-drop policy if exists "public read teams" on teams;
-create policy "public read teams"
-  on teams for select
-  to anon, authenticated
-  using (true);
-
-drop policy if exists "public read matches" on matches;
-create policy "public read matches"
-  on matches for select
-  to anon, authenticated
-  using (true);
