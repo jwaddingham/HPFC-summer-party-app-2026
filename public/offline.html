@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connection Lost</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+    }
+    h1 {
+      font-size: 28px;
+      margin: 0 0 12px 0;
+      font-weight: bold;
+    }
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 0 24px 0;
+      color: #cccccc;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: opacity 0.2s;
+    }
+    .retry-btn {
+      background: #dc2626;
+      color: white;
+    }
+    .retry-btn:hover {
+      opacity: 0.9;
+    }
+    .home-btn {
+      background: #404040;
+      color: white;
+    }
+    .home-btn:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>You're Offline</h1>
+    <p>Check your connection and try again. The app works better with a stable internet connection.</p>
+    <div class="actions">
+      <button class="retry-btn" onclick="location.reload()">Try Again</button>
+      <button class="home-btn" onclick="location.href='/'">Go Home</button>
+    </div>
+  </div>
+</body>
+</html>
