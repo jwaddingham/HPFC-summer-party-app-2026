@@ -68,8 +68,19 @@ function ScoreEntry({
     setTimeout(() => setSaved(false), 2000);
   }
 
+  const isComplete = match.status === 'complete';
+
   return (
-    <div className="border-2 border-ink bg-white p-3 space-y-3">
+    <div className={`border-2 p-3 space-y-3 relative ${
+      isComplete
+        ? 'border-pitch bg-white'
+        : 'border-ink bg-white'
+    }`}>
+      {isComplete && (
+        <div className="absolute top-2 right-2 bg-pitch rounded-full p-1" aria-hidden="true">
+          <Check className="w-4 h-4 text-white" />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <span className="font-semibold text-ink text-sm truncate">{homeTeam}</span>
         <span className="font-semibold text-ink text-sm truncate text-right">{awayTeam}</span>
