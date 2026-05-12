@@ -1,0 +1,21 @@
+# Supabase Project Configuration
+project_id = "ypbsoavrjzkoqhcnmruj"
+region = "eu-central-1"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
+
+[auth]
+enabled = true
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
+
+[vector]
+enabled = false
