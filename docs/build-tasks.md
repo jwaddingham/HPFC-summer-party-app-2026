@@ -19,7 +19,69 @@ This file is a handoff list for agents and people building the Hinksey Park Foot
 - Unit test setup has been added with Vitest.
 - **Magic Patterns design is now integrated:** Colors, fonts, and components (LeagueTable, MatchTile, Button, StatusPill, TabBar, Bracket) have been adapted from the Magic Patterns export and wired into the public pages (`app/page.tsx` and `app/tournament/[id]/page.tsx`).
 - Public tournament centre now displays league table, fixtures, and knockout tabs with the Magic Patterns visual identity (black and red HPFC branding, custom fonts, shadow-based button states).
+- **PWA and favicon support is complete:** SVG favicon, manifest.json, service worker, and PWA metadata configured. App is installable on mobile devices.
 - Remaining work: Supabase integration for real data, admin flows, offline resilience, and QR sharing.
+
+## PWA and Favicon Implementation
+
+✅ **Complete.** Favicon and Progressive Web App support has been fully implemented.
+
+### What was done
+
+- ✅ Created `favicon.svg` with HPFC branding (black background, red stripe with white football)
+- ✅ Generated PWA icons in multiple sizes:
+  - 192x192 PNG (standard PWA icon)
+  - 512x512 PNG (splash screen icon)
+  - Maskable versions for adaptive icons on modern Android
+- ✅ Created `manifest.json` with proper PWA metadata:
+  - App name, description, theme colors
+  - Icon definitions with purpose flags
+  - Display mode set to standalone (fullscreen app-like experience)
+  - Theme color: #b71c1c (HPFC deep red)
+  - Background color: white
+- ✅ Implemented service worker (`sw.js`):
+  - Cache-first strategy for static assets
+  - Network-first strategy for page navigation
+  - Offline fallback support
+- ✅ Updated `app/layout.tsx` with PWA metadata:
+  - Added manifest.json link
+  - Configured apple-mobile-web-app metadata
+  - Set theme colors and viewport settings
+  - Added apple-touch-icon support
+- ✅ Created `components/PWARegistration.tsx`:
+  - Client-side service worker registration
+  - Automatic on app load
+
+### Result
+
+The app is now installable as a PWA on:
+- iOS/iPadOS (via Add to Home Screen)
+- Android devices (via install prompt or app menu)
+- Desktop browsers (via install prompt)
+
+App features when installed:
+- Standalone display (no browser UI)
+- Custom app icon and splash screen
+- HPFC branding throughout
+- Offline support for cached pages
+- Fast load times from cache
+
+### Notes for future improvements
+
+1. The PNG icons are currently solid color placeholders. Consider replacing with:
+   - Properly designed icons matching HPFC visual identity
+   - Use image editing tools or online converters to convert the SVG favicon to PNG with proper scaling
+   
+2. Service worker can be enhanced with:
+   - Background sync for offline score submissions
+   - Push notifications for match updates
+   - More sophisticated caching strategies per resource type
+
+3. Test on real devices:
+   - Test install prompts on Android Chrome
+   - Test home screen launch on iOS
+   - Verify splash screen appearance
+   - Check performance improvements from caching
 
 ## Magic Patterns Design Integration
 
