@@ -17,7 +17,34 @@ This file is a handoff list for agents and people building the Hinksey Park Foot
 - `lib/tournament.ts` contains round-robin generation and standings calculation.
 - `db/schema.sql` contains the first Supabase schema.
 - Unit test setup has been added with Vitest.
-- Supabase integration, realtime subscriptions, persistence, RLS policies, and offline retry queues still need implementation.
+- **Magic Patterns design is now integrated:** Colors, fonts, and components (LeagueTable, MatchTile, Button, StatusPill, TabBar, Bracket) have been adapted from the Magic Patterns export and wired into the public pages (`app/page.tsx` and `app/tournament/[id]/page.tsx`).
+- Public tournament centre now displays league table, fixtures, and knockout tabs with the Magic Patterns visual identity (black and red HPFC branding, custom fonts, shadow-based button states).
+- Remaining work: Supabase integration for real data, admin flows, offline resilience, and QR sharing.
+
+## Magic Patterns Design Integration
+
+✅ **Complete.** The Magic Patterns design (https://www.magicpatterns.com/c/flaswdbi6nzmeedknwr5rr) has been integrated.
+
+### What was done
+
+- ✅ Extracted all 12 screens from the Magic Patterns export
+- ✅ Adapted and created reusable UI components: `LeagueTable`, `MatchTile`, `StatusPill`, `Bracket`, `Button`, `TabBar`, `HPFCBadge`
+- ✅ Applied Magic Patterns design tokens (colors: ink/blood/chalk/pitch/sky/gold, fonts: Bebas Neue / Inter / Permanent Marker, shadow utilities)
+- ✅ Updated `tailwind.config.ts` and `app/globals.css` with CSS variables and brand identity
+- ✅ Integrated into public pages: `app/page.tsx` (home/tournament list) and `app/tournament/[id]/page.tsx` (tournament centre with TABLE/FIXTURES/KNOCKOUT tabs)
+
+### What's still scaffolded with mock data
+
+- `app/tournament/[id]/page.tsx` uses mock league table and fixtures. Needs wiring to Supabase real data (F-03, PUB-02).
+- QR share screen (Screen 11) and winner celebration screen (Screen 12) from the design are not yet wired to any route. See **PUB-03** and **PUB-04** below.
+- Admin screens (Screen 6-10: login, dashboard, score entry, setup, knockout generation) are not yet integrated. See **ADM** tasks below.
+
+### Next steps
+
+1. **PUB-02** (wire tournament centre to Supabase data) — replace mock data in `app/tournament/[id]/page.tsx` with live queries
+2. **PUB-03** (add QR share route) — create `app/tournament/[id]/share` page using the Magic Patterns QR screen design
+3. **PUB-04** (add winner celebration) — conditionally show the winner screen when tournament status is `complete`
+4. **ADM-02 through ADM-08** (admin flows) — integrate the Magic Patterns admin screens into `app/admin/` routes
 
 ## Recommended Build Order
 
