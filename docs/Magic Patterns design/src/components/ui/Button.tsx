@@ -37,7 +37,7 @@ export function Button({
         scale: variant === 'ghost' ? 0.95 : 1
       }}
       className={`${`${`${baseStyles} ${variants[variant]} ${variant !== 'icon' ? sizes[size] : ''} ${widthClass} ${className}`} bg-[#B11227]`} bg-[#B11227]`}
-      {...props}>
+      {...props as React.ComponentPropsWithoutRef<typeof motion.button>}>
       
       {children}
     </motion.button>);
