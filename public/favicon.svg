@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- Black background -->
+  <rect width="180" height="180" fill="#1a1a1a"/>
+
+  <!-- Deep red accent stripe -->
+  <rect width="180" height="60" y="60" fill="#b71c1c"/>
+
+  <!-- White football/soccer ball in red stripe -->
+  <circle cx="90" cy="90" r="30" fill="white"/>
+  <circle cx="90" cy="90" r="25" fill="none" stroke="#b71c1c" stroke-width="2"/>
+
+  <!-- Pentagon pattern on ball (simplified) -->
+  <path d="M 90 65 L 105 75 L 100 95 L 80 95 L 75 75 Z" fill="#b71c1c"/>
+</svg>
