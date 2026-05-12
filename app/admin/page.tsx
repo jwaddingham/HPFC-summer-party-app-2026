@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
 
@@ -8,6 +8,12 @@ export default function AdminLogin() {
   const [err, setErr] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (localStorage.getItem('hpfc_admin') === '1') {
+      router.replace('/admin/dashboard');
+    }
+  }, [router]);
 
   async function submit() {
     if (!code.trim()) {
@@ -23,7 +29,7 @@ export default function AdminLogin() {
       });
       if (res.ok) {
         localStorage.setItem('hpfc_admin', '1');
-        router.push('/admin/tournaments');
+        router.push('/admin/dashboard');
       } else {
         setErr('Invalid code');
       }
