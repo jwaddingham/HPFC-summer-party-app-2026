@@ -35,4 +35,19 @@ Set `.env.local`:
 ADMIN_ACCESS_CODE=your-code
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
+
+## Database migrations
+Apply SQL migrations with Supabase CLI:
+```bash
+npm run db:migrate
+```
+
+Migrations currently auto-run on app start for this project:
+```bash
+npm run dev
+npm run start
+```
+
+`dev:migrate` is kept as an explicit alias.

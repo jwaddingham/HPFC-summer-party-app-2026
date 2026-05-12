@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run db:migrate && next dev",
+    "dev:migrate": "npm run db:migrate && next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "npm run db:migrate && next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:migrate": "supabase db push"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
