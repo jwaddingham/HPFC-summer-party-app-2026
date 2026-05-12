@@ -22,16 +22,10 @@ jobs:
         with:
           version: latest
 
-      - name: Link Supabase project
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
-
       - name: Dry-run migrations
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: supabase db push --dry-run --password "$SUPABASE_DB_PASSWORD"
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: supabase db push --dry-run --db-url "$SUPABASE_DB_URL"
 
   supabase-migrate-main:
     if: github.event_name == 'push'
@@ -46,13 +40,7 @@ jobs:
         with:
           version: latest
 
-      - name: Link Supabase project
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
-
       - name: Apply migrations
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: supabase db push --db-url "$SUPABASE_DB_URL"

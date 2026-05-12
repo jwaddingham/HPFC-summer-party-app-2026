@@ -57,6 +57,4 @@ npm run start
 - Pushes to `main` run `supabase db push` before deployment workflows.
 
 Required GitHub repository secrets:
-- `SUPABASE_ACCESS_TOKEN`
-- `SUPABASE_PROJECT_REF`
-- `SUPABASE_DB_PASSWORD`
+- `SUPABASE_DB_URL`
