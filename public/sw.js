@@ -32,7 +32,9 @@ self.addEventListener('fetch', event => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .catch(() => caches.match('/offline.html'))
+        .catch(() => caches.match('/offline.html')
+          .then(r => r || new Response('Offline', { status: 503, statusText: 'Service Unavailable' }))
+        )
     );
     return;
   }
