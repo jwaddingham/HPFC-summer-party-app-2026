@@ -17,7 +17,7 @@ type MatchRow = {
   status: string;
 };
 
-function getAdminHeaders() {
+function getAdminHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {};
   return localStorage.getItem('hpfc_admin') === '1' ? { 'x-hpfc-admin': '1' } : {};
 }
