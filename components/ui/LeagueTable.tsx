@@ -12,7 +12,14 @@ export interface LeagueTableRow {
   color?: string;
 }
 
-export function LeagueTable({ rows }: { rows: LeagueTableRow[] }) {
+export function LeagueTable({
+  rows,
+  qualifyingCount
+}: {
+  rows: LeagueTableRow[];
+  /** Number of teams that progress to the knockout stage. When omitted, no qualifying indicator is shown. */
+  qualifyingCount?: number;
+}) {
   return (
     <div className="w-full border-2 border-ink bg-white shadow-hard overflow-hidden">
       {/* Header */}
@@ -27,7 +34,7 @@ export function LeagueTable({ rows }: { rows: LeagueTableRow[] }) {
       {/* Rows */}
       <div className="flex flex-col">
         {rows.map((team, index) => {
-          const isQualifying = index < 4; // Top 4 qualify for knockout
+          const isQualifying = qualifyingCount !== undefined && index < qualifyingCount;
           return (
             <div
               key={team.id}
@@ -59,10 +66,12 @@ export function LeagueTable({ rows }: { rows: LeagueTableRow[] }) {
       </div>
 
       {/* Legend */}
-      <div className="bg-chalk px-3 py-2 border-t-2 border-ink flex items-center gap-2 text-xs font-medium text-gray-600">
-        <div className="w-2 h-2 bg-pitch" />
-        <span>Qualifies for Knockout Stage</span>
-      </div>
+      {qualifyingCount !== undefined && (
+        <div className="bg-chalk px-3 py-2 border-t-2 border-ink flex items-center gap-2 text-xs font-medium text-gray-600">
+          <div className="w-2 h-2 bg-pitch" />
+          <span>Top {qualifyingCount} qualify for Knockout Stage</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ export function TabBar({
   onChange: (tab: string) => void;
 }) {
   return (
-    <div className="sticky top-0 z-10 bg-white border-b-2 border-ink flex overflow-x-auto">
+    <div className="bg-white border-b-2 border-ink flex overflow-x-auto">
       {tabs.map((tab) => (
         <button
           key={tab}

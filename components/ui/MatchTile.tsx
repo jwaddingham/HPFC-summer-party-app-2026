@@ -48,15 +48,31 @@ export function MatchTile({
 
       {/* Center: Score / Time */}
       <div className="flex flex-col items-center justify-center px-4 min-w-[80px]">
-        {isCompleted || isLive ? (
-          <div
-            className={`font-display tracking-wider flex items-center gap-2 ${compact ? 'text-2xl' : 'text-4xl'}`}
-          >
+        {isCompleted && (
+          <div className={`font-display tracking-wider flex items-center gap-2 ${compact ? 'text-2xl' : 'text-4xl'}`}>
             <span>{homeScore ?? 0}</span>
             <span className="text-gray-400 text-lg">-</span>
             <span>{awayScore ?? 0}</span>
           </div>
-        ) : (
+        )}
+
+        {isLive && homeScore !== null && awayScore !== null && (
+          <div className={`font-display tracking-wider flex items-center gap-2 ${compact ? 'text-2xl' : 'text-4xl'}`}>
+            <span>{homeScore}</span>
+            <span className="text-gray-400 text-lg">-</span>
+            <span>{awayScore}</span>
+          </div>
+        )}
+
+        {isLive && (homeScore === null || awayScore === null) && (
+          <div className={`font-display tracking-wider flex items-center gap-2 text-blood ${compact ? 'text-2xl' : 'text-4xl'}`}>
+            <span>—</span>
+            <span className="text-gray-400 text-lg">vs</span>
+            <span>—</span>
+          </div>
+        )}
+
+        {!isCompleted && !isLive && (
           <div className="font-display text-xl text-gray-500 tracking-wider">{time || 'TBD'}</div>
         )}
 

@@ -38,10 +38,11 @@ export default function Home() {
         {/* Admin settings link */}
         <Link
           href="/admin"
-          aria-label="Admin settings"
-          className="absolute top-4 right-4 z-20 p-2 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+          aria-label="Admin access"
+          className="absolute top-4 right-4 z-20 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-white bg-white/10 hover:bg-white/20 border border-white/30 transition-colors text-xs font-bold uppercase tracking-wider"
         >
-          <Settings className="w-6 h-6" />
+          <Settings className="w-4 h-4" />
+          Admin
         </Link>
 
         <div className="relative z-10 flex flex-col items-center text-center">
@@ -101,6 +102,15 @@ export default function Home() {
             </div>
           </Link>
         ))}
+
+        <div className="pt-4">
+          <Link
+            href="/admin"
+            className="block w-full text-center font-display text-lg tracking-wide uppercase text-ink border-2 border-ink bg-chalk shadow-hard-sm py-3 hover:bg-gray-100 active:shadow-none active:translate-y-1 active:translate-x-1 transition-all"
+          >
+            Admin Access
+          </Link>
+        </div>
       </div>
     </div>
   );
