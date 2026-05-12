@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getSupabasePublicClient } from '@/lib/supabase/server';
 import { ManageTeams } from './manage-teams';
+import { FixturePanel } from './fixture-panel';
 
 export default async function AdminTournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,15 +10,19 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
   }
   const supabase = getSupabasePublicClient();
 
-  const [{ data: tournament }, { data: teams }, { count }] = await Promise.all([
+  const [{ data: tournament }, { data: teams }, { data: matches }] = await Promise.all([
     supabase.from('tournaments').select('id, name').eq('id', id).single(),
-    supabase.from('teams').select('id, name').eq('tournament_id', id),
-    supabase.from('matches').select('id', { count: 'exact', head: true }).eq('tournament_id', id),
+    supabase.from('teams').select('id, name').eq('tournament_id', id).order('name', { ascending: true }),
+    supabase
+      .from('matches')
+      .select('id, stage, round_number, home_team_id, away_team_id, home_score, away_score, status')
+      .eq('tournament_id', id)
+      .order('round_number', { ascending: true }),
   ]);
 
   if (!tournament) notFound();
 
-  const locked = (count ?? 0) > 0;
+  const locked = (matches ?? []).length > 0;
 
   return (
     <div className="min-h-screen bg-chalk">
@@ -37,12 +42,7 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
         <ManageTeams tournamentId={id} initialTeams={teams ?? []} locked={locked} />
 
         {/* Fast score entry */}
-        <div className="bg-white border-2 border-ink shadow-hard p-4 space-y-3">
-          <h2 className="font-display text-xl text-ink tracking-wide">Fast score entry</h2>
-          <p className="text-sm text-gray-600">
-            Score entry controls and fixtures will appear here once teams are set up.
-          </p>
-        </div>
+        <FixturePanel tournamentId={id} teams={teams ?? []} initialMatches={matches ?? []} />
 
         {/* Manual tools */}
         <div className="bg-white border-2 border-ink shadow-hard p-4 space-y-3">
