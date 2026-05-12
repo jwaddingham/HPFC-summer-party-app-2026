@@ -51,3 +51,11 @@ npm run start
 ```
 
 `dev:migrate` is kept as an explicit alias.
+
+## CI migration workflow
+- PRs to `main` run a blocking dry-run check: `supabase-dry-run`.
+- Pushes to `main` run `supabase db push` before deployment workflows.
+
+Required GitHub repository secrets:
+- `SUPABASE_DB_URL`
+- `SUPABASE_DB_PASSWORD`

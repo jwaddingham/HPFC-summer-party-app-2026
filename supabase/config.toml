@@ -1,5 +1,4 @@
 # Supabase Project Configuration
-region = "eu-central-1"
 
 [api]
 enabled = true
@@ -15,6 +14,3 @@ enabled = true
 
 [storage]
 enabled = true
-
-[vector]
-enabled = false
