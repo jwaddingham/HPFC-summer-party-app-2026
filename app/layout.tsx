@@ -27,7 +27,7 @@ pendo.initialize({
 });
 `}</Script>
       </head>
-      <body className="bg-gray-100 text-ink">
+      <body className="bg-white text-ink">
         <main className="mx-auto min-h-screen max-w-2xl bg-white">{children}</main>
       </body>
     </html>

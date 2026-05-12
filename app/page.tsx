@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Settings } from 'lucide-react';
 import { HPFCBadge } from '@/components/ui/HPFCBadge';
 import { StatusPill } from '@/components/ui/StatusPill';
 
@@ -34,11 +35,20 @@ export default function Home() {
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white"></div>
         </div>
 
+        {/* Admin settings link */}
+        <Link
+          href="/admin"
+          aria-label="Admin settings"
+          className="absolute top-4 right-4 z-20 p-2 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <Settings className="w-6 h-6" />
+        </Link>
+
         <div className="relative z-10 flex flex-col items-center text-center">
-          <HPFCBadge className="w-20 h-20 mb-4 drop-shadow-lg" />
+          <HPFCBadge className="h-24 w-auto mb-4 drop-shadow-lg" />
           <h1 className="font-display text-4xl tracking-wider mb-1">HPFC SUMMER PARTY</h1>
           <p className="font-sans text-gray-400 text-sm font-medium tracking-widest uppercase">
-            Hinksley Park FC • 2026
+            Hinksey Park FC • 2026
           </p>
         </div>
 
