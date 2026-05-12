@@ -18,6 +18,26 @@ This file is a handoff list for agents and people building the Hinksey Park Foot
 - `db/schema.sql` contains the first Supabase schema.
 - Unit test setup has been added with Vitest.
 - Supabase integration, realtime subscriptions, persistence, RLS policies, and offline retry queues still need implementation.
+- Magic Patterns MCP server is configured in `.mcp.json` (https://mcp.magicpatterns.com/mcp) for fetching the agreed visual design.
+- Scaffold components added to `app/tournament/[id]/` for `standings.tsx`, `fixtures.tsx`, and `bracket.tsx`. These currently use mock data and are not yet wired into `app/tournament/[id]/page.tsx`.
+
+## Magic Patterns Design Integration
+
+The visual design lives at https://www.magicpatterns.com/c/flaswdbi6nzmeedknwr5rr. WebFetch cannot access it without auth; the Magic Patterns MCP server is configured for this purpose.
+
+### Status
+
+- ✅ MCP server registered in `.mcp.json`.
+- ⏳ Design has not yet been pulled in — the actual JSX, colors, and component structure from Magic Patterns still need to replace the scaffold mock components listed above.
+- ⏳ Scaffold components are placeholders only. They illustrate the data shape (Standing, Match) and rough layout, but the visual identity should come from the Magic Patterns export, not these scaffolds.
+
+### Next steps for design integration
+
+1. Use the Magic Patterns MCP server to fetch the design content from the URL above.
+2. Replace mock data in `app/tournament/[id]/standings.tsx`, `fixtures.tsx`, and `bracket.tsx` with the Magic Patterns layout.
+3. Wire the components into `app/tournament/[id]/page.tsx` so the public tournament centre shows standings + fixtures + bracket on one page (per PUB-02).
+4. Audit any additional screens in the design that aren't yet scaffolded (e.g. a QR share screen, a "tournament complete" winner treatment, an admin score-entry redesign) and add a sub-task for each under PUB or UI.
+5. Apply colors and typography from the design to `tailwind.config.ts` and `app/globals.css` (currently `hpfcRed` and `hpfcGold` are referenced but may not be defined).
 
 ## Recommended Build Order
 
