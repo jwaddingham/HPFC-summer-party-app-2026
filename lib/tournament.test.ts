@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTable } from './tournament';
+import { buildTable, generateKnockoutFixtures } from './tournament';
 import { Match, Team } from './types';
 
 const tournamentId = 'tournament-a';
@@ -84,5 +84,60 @@ describe('buildTable', () => {
 
     expect(byId.reds).toMatchObject({ played: 0, gf: 0, ga: 0, gd: 0, points: 0 });
     expect(byId.blues).toMatchObject({ played: 0, gf: 0, ga: 0, gd: 0, points: 0 });
+  });
+});
+
+describe('generateKnockoutFixtures', () => {
+  it('generates top-four semi-finals for 4 teams with 1v4 and 2v3 seeding', () => {
+    expect(generateKnockoutFixtures(['t1', 't2', 't3', 't4'], 'top4')).toEqual([
+      { stage: 'semi_final', round: 1, home: 't1', away: 't4' },
+      { stage: 'semi_final', round: 2, home: 't2', away: 't3' },
+    ]);
+  });
+
+  it('generates top-four semi-finals for 6 teams using only the top four seeds', () => {
+    expect(generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5', 't6'], 'top4')).toEqual([
+      { stage: 'semi_final', round: 1, home: 't1', away: 't4' },
+      { stage: 'semi_final', round: 2, home: 't2', away: 't3' },
+    ]);
+  });
+
+  it('generates top-four semi-finals for 8 teams using only the top four seeds', () => {
+    expect(generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'], 'top4')).toEqual([
+      { stage: 'semi_final', round: 1, home: 't1', away: 't4' },
+      { stage: 'semi_final', round: 2, home: 't2', away: 't3' },
+    ]);
+  });
+
+  it('generates quarter-finals for 8 teams with 1v8, 2v7, 3v6, and 4v5 seeding', () => {
+    expect(generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'], 'quarter_finals')).toEqual([
+      { stage: 'quarter_final', round: 1, home: 't1', away: 't8' },
+      { stage: 'quarter_final', round: 2, home: 't2', away: 't7' },
+      { stage: 'quarter_final', round: 3, home: 't3', away: 't6' },
+      { stage: 'quarter_final', round: 4, home: 't4', away: 't5' },
+    ]);
+  });
+
+  it('is deterministic for the same ordered seeds', () => {
+    const seeds = ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'];
+    expect(generateKnockoutFixtures(seeds, 'quarter_finals')).toEqual(generateKnockoutFixtures(seeds, 'quarter_finals'));
+  });
+
+  it('throws for unsupported top-four team counts', () => {
+    expect(() => generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5'], 'top4')).toThrow(
+      'Top-four mode supports only 4, 6, or 8 teams.',
+    );
+  });
+
+  it('throws when quarter-final mode does not have exactly 8 teams', () => {
+    expect(() => generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5', 't6'], 'quarter_finals')).toThrow(
+      'Quarter-final mode requires exactly 8 teams.',
+    );
+  });
+
+  it('throws when seeds contain duplicate teams', () => {
+    expect(() => generateKnockoutFixtures(['t1', 't2', 't2', 't4'], 'top4')).toThrow(
+      'Knockout generation requires unique team IDs.',
+    );
   });
 });

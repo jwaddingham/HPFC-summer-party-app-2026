@@ -6,6 +6,34 @@ export function generateRoundRobin(teamIds: string[]) {
   return fixtures;
 }
 
+export function generateKnockoutFixtures(orderedTeamIds: string[], mode: 'top4' | 'quarter_finals') {
+  if (new Set(orderedTeamIds).size !== orderedTeamIds.length) {
+    throw new Error('Knockout generation requires unique team IDs.');
+  }
+
+  if (mode === 'quarter_finals') {
+    if (orderedTeamIds.length !== 8) {
+      throw new Error('Quarter-final mode requires exactly 8 teams.');
+    }
+
+    return [
+      { stage: 'quarter_final' as const, round: 1, home: orderedTeamIds[0], away: orderedTeamIds[7] },
+      { stage: 'quarter_final' as const, round: 2, home: orderedTeamIds[1], away: orderedTeamIds[6] },
+      { stage: 'quarter_final' as const, round: 3, home: orderedTeamIds[2], away: orderedTeamIds[5] },
+      { stage: 'quarter_final' as const, round: 4, home: orderedTeamIds[3], away: orderedTeamIds[4] },
+    ];
+  }
+
+  if (orderedTeamIds.length !== 4 && orderedTeamIds.length !== 6 && orderedTeamIds.length !== 8) {
+    throw new Error('Top-four mode supports only 4, 6, or 8 teams.');
+  }
+
+  return [
+    { stage: 'semi_final' as const, round: 1, home: orderedTeamIds[0], away: orderedTeamIds[3] },
+    { stage: 'semi_final' as const, round: 2, home: orderedTeamIds[1], away: orderedTeamIds[2] },
+  ];
+}
+
 interface TableRow {
   teamId: string;
   team: string;
