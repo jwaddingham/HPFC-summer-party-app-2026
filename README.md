@@ -58,3 +58,4 @@ npm run start
 
 Required GitHub repository secrets:
 - `SUPABASE_DB_URL`
+- `SUPABASE_DB_PASSWORD`
