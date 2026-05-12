@@ -143,7 +143,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** `FixturePanel` component + `POST /api/admin/tournament/[id]/fixtures/generate`. Generates round-robin, persists to Supabase, displays grouped by round. Team mutations locked once fixtures exist.
 
 #### ADM-04: Build rapid score entry
-✅ **Done.** Inline score steppers (+/− buttons, 40px tap targets) on every fixture card. Per-match save with saving/saved/error states. Scheduled matches shown first per round. Completed scores pre-filled for editing. New `PATCH /api/admin/tournament/[id]/matches/[matchId]` route.
+✅ **Done.** Inline score steppers (+/− buttons, 40px tap targets) on every fixture card. Per-match save with saving/saved/error states. Scheduled matches shown first per round. Completed scores pre-filled for editing. New `PATCH /api/admin/tournament/[id]/matches/[matchId]` route. Completed matches have persistent green border and checkmark badge to distinguish from unscored ones (especially 0-0 results).
 
 #### ADM-05: Add knockout admin controls
 
