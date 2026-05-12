@@ -11,6 +11,8 @@ import type { TournamentDetail } from '@/lib/mockData';
 
 export function TournamentView({ tournament }: { tournament: TournamentDetail }) {
   const [activeTab, setActiveTab] = useState<'TABLE' | 'FIXTURES' | 'KNOCKOUT'>('TABLE');
+  const availableTabs = ['TABLE', 'FIXTURES', ...(tournament.knockoutGenerated ? ['KNOCKOUT'] : [])] as const;
+  const displayTab = availableTabs.includes(activeTab) ? activeTab : 'TABLE';
 
   const liveMatch = tournament.fixtures.find((f) => f.status === 'live');
   const recentResults = tournament.fixtures.filter((f) => f.status === 'completed');
@@ -53,14 +55,14 @@ export function TournamentView({ tournament }: { tournament: TournamentDetail })
         </div>
 
         <TabBar
-          tabs={['TABLE', 'FIXTURES', 'KNOCKOUT']}
-          activeTab={activeTab}
+          tabs={availableTabs as unknown as string[]}
+          activeTab={displayTab}
           onChange={(t) => setActiveTab(t as typeof activeTab)}
         />
       </div>
 
       <div className="p-4 space-y-6">
-        {activeTab === 'TABLE' && (
+        {displayTab === 'TABLE' && (
           <div className="space-y-6">
             {tournament.table.length > 0 ? (
               <LeagueTable rows={tournament.table} qualifyingCount={tournament.qualifyingCount} />
@@ -107,7 +109,7 @@ export function TournamentView({ tournament }: { tournament: TournamentDetail })
           </div>
         )}
 
-        {activeTab === 'FIXTURES' && (
+        {displayTab === 'FIXTURES' && (
           <div className="space-y-4">
             <h2 className="font-display text-2xl text-ink tracking-wider">FIXTURES & RESULTS</h2>
             {tournament.fixtures.length === 0 ? (
@@ -132,7 +134,7 @@ export function TournamentView({ tournament }: { tournament: TournamentDetail })
           </div>
         )}
 
-        {activeTab === 'KNOCKOUT' && (
+        {displayTab === 'KNOCKOUT' && (
           <div className="space-y-4">
             <h2 className="font-display text-2xl text-ink tracking-wider">KNOCKOUT STAGE</h2>
             <div className="bg-white border-2 border-ink p-6 shadow-hard-sm text-center space-y-2">

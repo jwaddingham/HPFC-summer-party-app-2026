@@ -102,15 +102,6 @@ export default function Home() {
             </div>
           </Link>
         ))}
-
-        <div className="pt-4">
-          <Link
-            href="/admin"
-            className="block w-full text-center font-display text-lg tracking-wide uppercase text-ink border-2 border-ink bg-chalk shadow-hard-sm py-3 hover:bg-gray-100 active:shadow-none active:translate-y-1 active:translate-x-1 transition-all"
-          >
-            Admin Access
-          </Link>
-        </div>
       </div>
     </div>
   );
