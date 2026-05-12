@@ -69,6 +69,9 @@ function ScoreEntry({
   }
 
   const isComplete = match.status === 'complete';
+  const hasUnsavedChanges =
+   homeScore !== (match.home_score ?? 0) || awayScore !== (match.away_score ?? 0);
+  const showEditState = isComplete && !hasUnsavedChanges && !saving && !saved;
 
   return (
     <div className={`border-2 p-3 space-y-3 relative ${
