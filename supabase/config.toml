@@ -1,5 +1,4 @@
 # Supabase Project Configuration
-project_id = "ypbsoavrjzkoqhcnmruj"
 region = "eu-central-1"
 
 [api]
