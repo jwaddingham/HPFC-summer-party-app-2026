@@ -1,0 +1,16 @@
+# Supabase Project Configuration
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
+
+[auth]
+enabled = true
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
