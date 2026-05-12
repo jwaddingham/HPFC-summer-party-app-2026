@@ -1,12 +1,16 @@
 import Link from 'next/link';
 import { CreateTournamentForm } from './create-tournament-form';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 export default function AdminTournaments() {
   return (
     <div className="min-h-screen bg-chalk">
       {/* Header */}
       <div className="bg-ink text-white pt-12 pb-8 px-4">
+        <Link href="/admin/dashboard" className="flex items-center text-gray-400 hover:text-white mb-3 transition-colors">
+          <ChevronLeft className="w-5 h-5 mr-1" />
+          <span className="text-sm font-bold uppercase tracking-wider">Dashboard</span>
+        </Link>
         <div className="flex justify-between items-center mb-2">
           <h1 className="font-display text-3xl tracking-wider">
             TOURNAMENT CONTROL
