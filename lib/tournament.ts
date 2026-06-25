@@ -1,4 +1,107 @@
-import { Match, Team } from './types';
+import { Match, MatchStage, Team, TournamentStatus } from './types';
+
+/**
+ * Allowed tournament status transitions. Every forward step has a matching
+ * reverse step so organisers can always roll back a mistake and are never
+ * trapped in an irreversible state (ENG-05).
+ */
+export const TOURNAMENT_TRANSITIONS: Record<TournamentStatus, TournamentStatus[]> = {
+  setup: ['group_stage'],
+  group_stage: ['setup', 'knockout_stage'],
+  knockout_stage: ['group_stage', 'complete'],
+  complete: ['knockout_stage', 'group_stage'],
+};
+
+export function canTransition(from: TournamentStatus, to: TournamentStatus) {
+  if (from === to) return true;
+  return TOURNAMENT_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+export function assertTransition(from: TournamentStatus, to: TournamentStatus) {
+  if (!canTransition(from, to)) {
+    throw new Error(`Cannot move tournament from ${from} to ${to}.`);
+  }
+}
+
+type WinnerInput = Pick<Match, 'home_team_id' | 'away_team_id' | 'home_score' | 'away_score' | 'winner_team_id'>;
+
+/**
+ * Resolve which team won a match. A decisive score wins automatically. A level
+ * score must be settled with an explicit winner (penalties or admin decision);
+ * until that is recorded the winner is undecided and this returns null.
+ */
+export function resolveMatchWinner(match: WinnerInput): string | null {
+  if (match.winner_team_id) {
+    if (match.winner_team_id !== match.home_team_id && match.winner_team_id !== match.away_team_id) {
+      throw new Error('Winner must be one of the two competing teams.');
+    }
+    return match.winner_team_id;
+  }
+
+  if (match.home_score === null || match.away_score === null) return null;
+  if (match.home_score > match.away_score) return match.home_team_id;
+  if (match.away_score > match.home_score) return match.away_team_id;
+  return null;
+}
+
+export type KnockoutFixture = {
+  stage: Exclude<MatchStage, 'group'>;
+  round: number;
+  home: string;
+  away: string;
+};
+
+const NEXT_KNOCKOUT_STAGE: Partial<Record<MatchStage, Exclude<MatchStage, 'group'>>> = {
+  quarter_final: 'semi_final',
+  semi_final: 'final',
+};
+
+export function nextKnockoutStage(stage: MatchStage): Exclude<MatchStage, 'group'> | null {
+  return NEXT_KNOCKOUT_STAGE[stage] ?? null;
+}
+
+/**
+ * Given every completed match in a knockout round, produce the fixtures for the
+ * next round by advancing the winners. Quarter-finals feed two semi-finals
+ * (QF1/QF4 and QF2/QF3 by round); semi-finals feed the single final. The final
+ * has no next round and returns an empty list.
+ */
+export function computeNextKnockoutRound(stage: MatchStage, stageMatches: Match[]): KnockoutFixture[] {
+  const nextStage = NEXT_KNOCKOUT_STAGE[stage];
+  if (!nextStage) return [];
+
+  const sorted = [...stageMatches].sort((a, b) => a.round_number - b.round_number);
+
+  if (stage === 'quarter_final' && sorted.length !== 4) {
+    throw new Error('Semi-finals require four completed quarter-finals.');
+  }
+  if (stage === 'semi_final' && sorted.length !== 2) {
+    throw new Error('The final requires two completed semi-finals.');
+  }
+
+  const winners = sorted.map((current) => {
+    const winner = resolveMatchWinner(current);
+    if (!winner) {
+      throw new Error('Every match in the round needs a winner before the next round can be drawn.');
+    }
+    return winner;
+  });
+
+  if (stage === 'quarter_final') {
+    return [
+      { stage: 'semi_final', round: 1, home: winners[0], away: winners[3] },
+      { stage: 'semi_final', round: 2, home: winners[1], away: winners[2] },
+    ];
+  }
+
+  return [{ stage: 'final', round: 1, home: winners[0], away: winners[1] }];
+}
+
+/** True when every match in the round is complete and has a resolved winner. */
+export function isKnockoutRoundComplete(stageMatches: Match[]): boolean {
+  if (stageMatches.length === 0) return false;
+  return stageMatches.every((current) => current.status === 'complete' && resolveMatchWinner(current) !== null);
+}
 
 export function generateRoundRobin(teamIds: string[]) {
   if (teamIds.length < 2) return [];

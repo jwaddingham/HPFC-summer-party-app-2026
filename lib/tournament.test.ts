@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { buildTable, generateKnockoutFixtures, generateRoundRobin } from './tournament';
+import {
+  buildTable,
+  canTransition,
+  assertTransition,
+  computeNextKnockoutRound,
+  generateKnockoutFixtures,
+  generateRoundRobin,
+  isKnockoutRoundComplete,
+  nextKnockoutStage,
+  resolveMatchWinner,
+} from './tournament';
 import { Match, Team } from './types';
 
 const tournamentId = 'tournament-a';
@@ -216,5 +226,185 @@ describe('generateKnockoutFixtures', () => {
     expect(() => generateKnockoutFixtures(['t1', 't2', 't2', 't4'], 'top4')).toThrow(
       'Knockout generation requires unique team IDs.',
     );
+  });
+});
+
+describe('tournament state machine', () => {
+  it('allows the documented forward progression', () => {
+    expect(canTransition('setup', 'group_stage')).toBe(true);
+    expect(canTransition('group_stage', 'knockout_stage')).toBe(true);
+    expect(canTransition('knockout_stage', 'complete')).toBe(true);
+  });
+
+  it('keeps every stage reversible so organisers are never trapped', () => {
+    expect(canTransition('group_stage', 'setup')).toBe(true);
+    expect(canTransition('knockout_stage', 'group_stage')).toBe(true);
+    expect(canTransition('complete', 'knockout_stage')).toBe(true);
+    expect(canTransition('complete', 'group_stage')).toBe(true);
+  });
+
+  it('treats a no-op transition to the same status as allowed', () => {
+    expect(canTransition('complete', 'complete')).toBe(true);
+  });
+
+  it('rejects skipping stages', () => {
+    expect(canTransition('setup', 'knockout_stage')).toBe(false);
+    expect(canTransition('setup', 'complete')).toBe(false);
+    expect(canTransition('group_stage', 'complete')).toBe(false);
+  });
+
+  it('assertTransition throws a clear message for illegal moves', () => {
+    expect(() => assertTransition('setup', 'complete')).toThrow('Cannot move tournament from setup to complete.');
+    expect(() => assertTransition('group_stage', 'knockout_stage')).not.toThrow();
+  });
+});
+
+describe('resolveMatchWinner', () => {
+  function knockoutMatch(overrides: Partial<Match>): Match {
+    return {
+      id: 'k1',
+      tournament_id: tournamentId,
+      stage: 'semi_final',
+      round_number: 1,
+      home_team_id: 'reds',
+      away_team_id: 'blues',
+      home_score: null,
+      away_score: null,
+      winner_team_id: null,
+      status: 'scheduled',
+      ...overrides,
+    };
+  }
+
+  it('returns the higher scorer for a decisive result', () => {
+    expect(resolveMatchWinner(knockoutMatch({ home_score: 2, away_score: 1 }))).toBe('reds');
+    expect(resolveMatchWinner(knockoutMatch({ home_score: 0, away_score: 3 }))).toBe('blues');
+  });
+
+  it('returns null for a level score with no explicit winner', () => {
+    expect(resolveMatchWinner(knockoutMatch({ home_score: 1, away_score: 1 }))).toBeNull();
+  });
+
+  it('honours an explicit winner on a level score (penalties/decision)', () => {
+    expect(resolveMatchWinner(knockoutMatch({ home_score: 1, away_score: 1, winner_team_id: 'blues' }))).toBe('blues');
+  });
+
+  it('returns null when scores are missing', () => {
+    expect(resolveMatchWinner(knockoutMatch({ home_score: null, away_score: null }))).toBeNull();
+  });
+
+  it('throws when the explicit winner is not one of the two teams', () => {
+    expect(() => resolveMatchWinner(knockoutMatch({ winner_team_id: 'golds' }))).toThrow(
+      'Winner must be one of the two competing teams.',
+    );
+  });
+});
+
+describe('computeNextKnockoutRound', () => {
+  function ko(overrides: Partial<Match>): Match {
+    return {
+      id: overrides.id ?? 'k',
+      tournament_id: tournamentId,
+      stage: 'semi_final',
+      round_number: 1,
+      home_team_id: 'a',
+      away_team_id: 'b',
+      home_score: 1,
+      away_score: 0,
+      winner_team_id: null,
+      status: 'complete',
+      ...overrides,
+    };
+  }
+
+  it('advances two semi-final winners into the final', () => {
+    const next = computeNextKnockoutRound('semi_final', [
+      ko({ id: 's1', round_number: 1, home_team_id: 'a', away_team_id: 'b', home_score: 2, away_score: 0 }),
+      ko({ id: 's2', round_number: 2, home_team_id: 'c', away_team_id: 'd', home_score: 0, away_score: 1 }),
+    ]);
+
+    expect(next).toEqual([{ stage: 'final', round: 1, home: 'a', away: 'd' }]);
+  });
+
+  it('advances four quarter-final winners into two semis (QF1/QF4 and QF2/QF3)', () => {
+    const next = computeNextKnockoutRound('quarter_final', [
+      ko({ id: 'q1', stage: 'quarter_final', round_number: 1, home_team_id: 's1', away_team_id: 's8', home_score: 3, away_score: 0 }),
+      ko({ id: 'q2', stage: 'quarter_final', round_number: 2, home_team_id: 's2', away_team_id: 's7', home_score: 0, away_score: 2 }),
+      ko({ id: 'q3', stage: 'quarter_final', round_number: 3, home_team_id: 's3', away_team_id: 's6', home_score: 1, away_score: 0 }),
+      ko({ id: 'q4', stage: 'quarter_final', round_number: 4, home_team_id: 's4', away_team_id: 's5', home_score: 2, away_score: 1 }),
+    ]);
+
+    expect(next).toEqual([
+      { stage: 'semi_final', round: 1, home: 's1', away: 's4' },
+      { stage: 'semi_final', round: 2, home: 's7', away: 's3' },
+    ]);
+  });
+
+  it('uses the explicit winner of a drawn knockout match when advancing', () => {
+    const next = computeNextKnockoutRound('semi_final', [
+      ko({ id: 's1', round_number: 1, home_team_id: 'a', away_team_id: 'b', home_score: 1, away_score: 1, winner_team_id: 'b' }),
+      ko({ id: 's2', round_number: 2, home_team_id: 'c', away_team_id: 'd', home_score: 2, away_score: 0 }),
+    ]);
+
+    expect(next).toEqual([{ stage: 'final', round: 1, home: 'b', away: 'c' }]);
+  });
+
+  it('returns an empty list for the final (no next round)', () => {
+    expect(computeNextKnockoutRound('final', [ko({ stage: 'final' })])).toEqual([]);
+    expect(nextKnockoutStage('final')).toBeNull();
+  });
+
+  it('throws when a drawn match has no recorded winner', () => {
+    expect(() =>
+      computeNextKnockoutRound('semi_final', [
+        ko({ id: 's1', round_number: 1, home_score: 1, away_score: 1 }),
+        ko({ id: 's2', round_number: 2, home_score: 2, away_score: 0 }),
+      ]),
+    ).toThrow('Every match in the round needs a winner before the next round can be drawn.');
+  });
+
+  it('throws when the round does not have the expected number of matches', () => {
+    expect(() => computeNextKnockoutRound('quarter_final', [ko({ stage: 'quarter_final' })])).toThrow(
+      'Semi-finals require four completed quarter-finals.',
+    );
+  });
+});
+
+describe('isKnockoutRoundComplete', () => {
+  function ko(overrides: Partial<Match>): Match {
+    return {
+      id: 'k',
+      tournament_id: tournamentId,
+      stage: 'semi_final',
+      round_number: 1,
+      home_team_id: 'a',
+      away_team_id: 'b',
+      home_score: 1,
+      away_score: 0,
+      winner_team_id: null,
+      status: 'complete',
+      ...overrides,
+    };
+  }
+
+  it('is false for an empty round', () => {
+    expect(isKnockoutRoundComplete([])).toBe(false);
+  });
+
+  it('is false while a match is still scheduled', () => {
+    expect(isKnockoutRoundComplete([ko({ status: 'scheduled', home_score: null, away_score: null })])).toBe(false);
+  });
+
+  it('is false when a completed match is an unresolved draw', () => {
+    expect(isKnockoutRoundComplete([ko({ home_score: 1, away_score: 1 })])).toBe(false);
+  });
+
+  it('is true when every match is complete with a resolved winner', () => {
+    expect(
+      isKnockoutRoundComplete([
+        ko({ id: 's1', home_score: 2, away_score: 1 }),
+        ko({ id: 's2', round_number: 2, home_score: 1, away_score: 1, winner_team_id: 'a' }),
+      ]),
+    ).toBe(true);
   });
 });

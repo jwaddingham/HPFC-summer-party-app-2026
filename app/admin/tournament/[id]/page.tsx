@@ -3,7 +3,10 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { AdminGuard } from '@/components/admin/AdminGuard';
 import { getSupabasePublicClient } from '@/lib/supabase/server';
+import { buildTable } from '@/lib/tournament';
+import type { Match, Team } from '@/lib/types';
 import { FixturePanel } from './fixture-panel';
+import { KnockoutPanel, type KnockoutMatchRow } from './knockout-panel';
 import { ManageTeams } from './manage-teams';
 
 export const dynamic = 'force-dynamic';
@@ -24,18 +27,26 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
   const supabase = getSupabasePublicClient();
 
   const [{ data: tournament }, { data: teams }, { data: matches }] = await Promise.all([
-    supabase.from('tournaments').select('id, name').eq('id', id).single(),
-    supabase.from('teams').select('id, name').eq('tournament_id', id).order('name', { ascending: true }),
+    supabase.from('tournaments').select('id, name, status, knockout_mode').eq('id', id).single(),
+    supabase.from('teams').select('id, tournament_id, name').eq('tournament_id', id).order('name', { ascending: true }),
     supabase
       .from('matches')
-      .select('id, stage, round_number, home_team_id, away_team_id, home_score, away_score, status')
+      .select('id, tournament_id, stage, round_number, home_team_id, away_team_id, home_score, away_score, winner_team_id, status')
       .eq('tournament_id', id)
       .order('round_number', { ascending: true }),
   ]);
 
   if (!tournament) notFound();
 
-  const locked = (matches ?? []).length > 0;
+  const teamList = (teams ?? []) as Team[];
+  const allMatches = (matches ?? []) as Match[];
+  const groupMatches = allMatches.filter((match) => match.stage === 'group');
+  const knockoutMatches = allMatches.filter((match) => match.stage !== 'group') as KnockoutMatchRow[];
+
+  const locked = allMatches.length > 0;
+  const groupComplete = groupMatches.length > 0 && groupMatches.every((match) => match.status !== 'scheduled');
+  // Default seeding follows the group table; the panel lets organisers reorder.
+  const seedOrder = buildTable(teamList, groupMatches).map((row) => ({ id: row.teamId, name: row.team }));
 
   return (
     <AdminGuard>
@@ -62,30 +73,18 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
         <ManageTeams tournamentId={id} initialTeams={teams ?? []} locked={locked} />
 
         {/* Fast score entry */}
-        <FixturePanel tournamentId={id} teams={teams ?? []} initialMatches={matches ?? []} />
+        <FixturePanel tournamentId={id} teams={teamList} initialMatches={groupMatches} />
 
-        {/* Manual tools */}
-        <div className="bg-white border-2 border-ink shadow-hard p-4 space-y-3">
-          <h2 className="font-display text-xl text-ink tracking-wide">Manual tools</h2>
-          <ul className="space-y-2 text-sm text-gray-700">
-            <li className="flex items-center gap-2">
-              <span className="font-bold text-blood">•</span>
-              Edit/delete/reset fixtures
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="font-bold text-blood">•</span>
-              Skip/cancel/replay match
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="font-bold text-blood">•</span>
-              Manual advance team
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="font-bold text-blood">•</span>
-              Reorder knockout seeds
-            </li>
-          </ul>
-        </div>
+        {/* Knockout stage */}
+        <KnockoutPanel
+          tournamentId={id}
+          status={tournament.status}
+          knockoutMode={tournament.knockout_mode}
+          teamCount={teamList.length}
+          groupComplete={groupComplete}
+          seedOrder={seedOrder}
+          initialKnockoutMatches={knockoutMatches}
+        />
       </div>
       </div>
     </AdminGuard>
