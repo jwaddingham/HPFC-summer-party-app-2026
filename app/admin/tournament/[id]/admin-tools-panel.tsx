@@ -17,17 +17,14 @@ export function AdminToolsPanel({
 }) {
   const router = useRouter();
   const [resetting, setResetting] = useState(false);
+  const [resetPhrase, setResetPhrase] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const hasGeneratedStructure = matchCount > 0 || status !== 'setup';
+  const resetConfirmed = resetPhrase === 'RESET';
 
   async function resetToSetup() {
-    if (!hasGeneratedStructure) return;
-    if (
-      !confirm(
-        'Reset this tournament to setup? This deletes all generated fixtures, scores, and knockout matches. Team names are kept so you can regenerate from a clean slate.',
-      )
-    ) {
+    if (!hasGeneratedStructure || !resetConfirmed) {
       return;
     }
 
@@ -57,6 +54,7 @@ export function AdminToolsPanel({
     }
 
     setNotice(`Tournament reset. Deleted ${payload.deletedMatches ?? 0} generated match${payload.deletedMatches === 1 ? '' : 'es'}.`);
+    setResetPhrase('');
     router.refresh();
   }
 
@@ -79,9 +77,22 @@ export function AdminToolsPanel({
         <p>Deletes group fixtures, scores, and knockout matches. Teams remain, so organisers can rename teams and generate fixtures again.</p>
       </div>
 
+      <label className="block space-y-1 text-sm font-semibold text-ink">
+        <span>Type RESET to enable fixture deletion</span>
+        <input
+          className="w-full border-2 border-ink p-3 uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 disabled:opacity-50"
+          value={resetPhrase}
+          onChange={(event) => setResetPhrase(event.target.value.toUpperCase())}
+          disabled={!hasGeneratedStructure || resetting}
+          inputMode="text"
+          autoCapitalize="characters"
+          autoComplete="off"
+        />
+      </label>
+
       <button
         type="button"
-        disabled={!hasGeneratedStructure || resetting}
+        disabled={!hasGeneratedStructure || !resetConfirmed || resetting}
         onClick={resetToSetup}
         className="flex min-h-11 w-full items-center justify-center gap-2 border-2 border-blood px-4 py-2 font-display text-sm uppercase tracking-wider text-blood transition-all active:translate-x-px active:translate-y-px disabled:opacity-50"
       >
