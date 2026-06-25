@@ -82,7 +82,7 @@ Add the runtime variables below in Vercel Project Settings → Environment Varia
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-Keep `SUPABASE_DB_URL` and `SUPABASE_DB_PASSWORD` in GitHub repository secrets for migration workflows rather than exposing them to the browser.
+These are the only Vercel runtime variables the app needs. Keep `SUPABASE_DB_URL` and `SUPABASE_DB_PASSWORD` in GitHub repository secrets for migration workflows rather than adding them to Vercel or exposing them to the browser.
 
 
 ## Linting and dependency audits
