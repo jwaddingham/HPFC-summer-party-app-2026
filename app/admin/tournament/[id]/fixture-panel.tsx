@@ -121,20 +121,34 @@ function ScoreEntry({
     });
     onPendingChange();
 
-    const response = await fetch(
-      `/api/admin/tournament/${tournamentId}/matches/${match.id}`,
-      {
-        method: 'PATCH',
-        headers: getAdminHeaders({ json: true }),
-        body: JSON.stringify({ home_score: homeScore, away_score: awayScore }),
-      }
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        `/api/admin/tournament/${tournamentId}/matches/${match.id}`,
+        {
+          method: 'PATCH',
+          headers: getAdminHeaders({ json: true }),
+          body: JSON.stringify({ home_score: homeScore, away_score: awayScore }),
+        }
+      );
+    } catch {
+      setSaving(false);
+      setError('Saved locally. Will retry when connection returns.');
+      return;
+    }
 
     const payload = await response.json().catch(() => ({}));
     setSaving(false);
 
     if (!response.ok) {
-      setError(payload.error ?? 'Saved locally. Will retry when connection returns.');
+      removePendingScore(tournamentId, match.id);
+      onPendingChange();
+      onSaved(match);
+      setError(
+        response.status === 401
+          ? 'Admin session expired. Log in again, then save this result.'
+          : payload.error ?? 'Score was not saved. Please check the result and try again.',
+      );
       return;
     }
 
@@ -284,16 +298,33 @@ export function FixturePanel({
     if (queued.length === 0) return;
 
     for (const pending of queued) {
-      const response = await fetch(
-        `/api/admin/tournament/${tournamentId}/matches/${pending.matchId}`,
-        {
-          method: 'PATCH',
-          headers: getAdminHeaders({ json: true }),
-          body: JSON.stringify({ home_score: pending.home_score, away_score: pending.away_score }),
-        },
-      );
+      let response: Response;
+      try {
+        response = await fetch(
+          `/api/admin/tournament/${tournamentId}/matches/${pending.matchId}`,
+          {
+            method: 'PATCH',
+            headers: getAdminHeaders({ json: true }),
+            body: JSON.stringify({ home_score: pending.home_score, away_score: pending.away_score }),
+          },
+        );
+      } catch {
+        continue;
+      }
 
-      if (!response.ok) continue;
+      if (!response.ok) {
+        removePendingScore(tournamentId, pending.matchId);
+        const serverMatch = initialMatches.find((match) => match.id === pending.matchId);
+        if (serverMatch) {
+          setMatches((prev) => prev.map((match) => (match.id === pending.matchId ? serverMatch : match)));
+        }
+        setError(
+          response.status === 401
+            ? 'A queued result was rejected because admin access expired. Log in again and save it again.'
+            : 'A queued result was rejected. Please check the score and save it again.',
+        );
+        continue;
+      }
 
       const updated = await response.json().catch(() => null);
       removePendingScore(tournamentId, pending.matchId);
@@ -303,7 +334,7 @@ export function FixturePanel({
     }
 
     refreshPendingScores();
-  }, [refreshPendingScores, tournamentId]);
+  }, [initialMatches, refreshPendingScores, tournamentId]);
 
   useEffect(() => {
     setMatches(applyPendingScores(initialMatches, tournamentId));

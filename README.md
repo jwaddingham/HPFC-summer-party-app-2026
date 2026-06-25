@@ -94,7 +94,7 @@ npm run dev
 ```
 
 `db:migrate` is a local-safe alias for `db:migrate:local`, and `dev:migrate` is kept as an explicit alias.
-`db:reset:local` runs Supabase's local reset flow, applying migrations and `supabase/seed.sql`.
+`db:reset:local` runs Supabase's local reset flow, applying migrations from `supabase/migrations` and then `supabase/seed.sql`.
 
 To push migrations to a hosted database outside the GitHub workflow, set `SUPABASE_DB_URL` and `SUPABASE_DB_PASSWORD`, then run:
 ```bash

@@ -45,10 +45,10 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** Composite foreign keys applied to home, away, and winner team columns in `db/schema.sql`.
 
 #### DB-02: Add indexes for live pages
-✅ **Done.** Applied in `db/migrations/20260512134000_add_live_page_indexes.sql`.
+✅ **Done.** Applied in `supabase/migrations/20260512134000_add_live_page_indexes.sql`.
 
 #### DB-03: Add RLS policies
-✅ **Done.** Public SELECT allowed on all tables; anonymous writes blocked. Applied in `db/migrations/20260512135000_enable_rls_public_reads.sql`.
+✅ **Done.** Public SELECT allowed on all tables; anonymous writes blocked. Applied in `supabase/migrations/20260512135000_enable_rls_public_reads.sql`.
 
 #### DB-04: Add migrations and seed data
 ✅ **Done.** `supabase/seed.sql` seeds deterministic 4, 6, and 8 team demo tournaments covering setup, group-stage, and knockout/complete scenarios. `npm run db:reset:local` resets the local Supabase database and applies the seed.
