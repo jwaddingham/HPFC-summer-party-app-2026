@@ -31,31 +31,13 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** `package-lock.json` committed. `npm run build`, `npm run lint`, and `npm run test` all work.
 
 #### F-02: Add environment examples
-
-- Owner: Build/setup
-- Depends on: F-01
-- Work:
-  - Add `.env.example` with required keys.
-  - Document local Supabase setup and Vercel env vars.
-- Acceptance:
-  - README explains exactly which env vars are needed and what each one does.
-  - No secrets are committed.
+✅ **Done.** `.env.example` lists the required local, Supabase, CI, and Vercel variables with placeholder values. README documents local Supabase setup, Vercel runtime variables, migration secrets, and the purpose of each key.
 
 #### F-03: Add shared Supabase clients
 ✅ **Done.** `lib/supabase/server.ts` exports `getSupabasePublicClient()` and `getSupabaseAdminClient()`. Missing env vars throw with useful messages.
 
 #### F-04: Configure linting and dependency audit policy
-
-- Owner: Build/setup
-- Depends on: F-01
-- Work:
-  - Add a real ESLint setup or replace the placeholder `next lint` script with the current Next.js-supported lint command.
-  - Decide whether dependency audits should fail CI and at which severity.
-  - Upgrade vulnerable framework packages before production launch.
-- Acceptance:
-  - `npm run lint` runs non-interactively.
-  - Dependency audit expectations are documented.
-  - Known critical production dependency warnings are resolved before deployment.
+✅ **Done.** Added a real ESLint config for JavaScript and TypeScript files, replaced `next lint` with the non-interactive ESLint CLI, and documented a production audit policy. `npm run audit:prod` fails on high or critical production dependency vulnerabilities.
 
 ### Database And Security
 
