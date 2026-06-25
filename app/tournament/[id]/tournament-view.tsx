@@ -50,12 +50,12 @@ export function TournamentView({ tournament }: { tournament: TournamentDetail })
             <ChevronLeft className="w-5 h-5 mr-1" />
             <span className="text-sm font-bold uppercase tracking-wider">All Events</span>
           </Link>
-          <div className="flex justify-between items-end">
-            <div>
-              <h1 className="font-display text-3xl tracking-wider leading-none mb-1">
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="break-words font-display text-3xl tracking-wider leading-none mb-1">
                 {current.displayName}
               </h1>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <StatusPill
                   status={
                     current.status === 'complete'

@@ -20,7 +20,7 @@
 2. ✅ Team setup and fixtures engine utilities
 3. ✅ Score entry UI + live table calculation
 4. ✅ Admin access code route
-5. ⏳ Next: knockout generation controls + bracket progression + route/API smoke tests
+5. ⏳ Next: browser verification, deployment checks, and event-day launch rehearsal
 
 See `docs/build-tasks.md` for a handoff-ready backlog with owners, dependencies, and acceptance criteria.
 
@@ -37,6 +37,20 @@ To reset a local Supabase database and load deterministic 4, 6, and 8 team demo 
 ```bash
 npm run db:reset:local
 ```
+
+To create a fresh demo tournament through the app APIs while the dev server is running:
+```bash
+npm run demo:seed
+```
+
+To smoke-test the core day-of-event flow against a running local or preview app:
+```bash
+# Optional when testing a deployed preview:
+# HPFC_BASE_URL=https://your-preview-url HPFC_ADMIN_CODE=your-code npm run smoke:e2e
+npm run smoke:e2e
+```
+
+The smoke flow logs in, creates a demo tournament, generates fixtures, enters one score, and verifies that the public tournament table updates. It reads `.env.local` automatically for local runs.
 
 ### Environment variables
 

@@ -88,32 +88,13 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** `KnockoutPanel` (`app/admin/tournament/[id]/knockout-panel.tsx`) lets organisers choose the format (top-4 semis, or quarter-finals when there are 8 teams), reorder seeds before drawing, and draw the bracket (`POST .../knockout/generate`). Knockout score entry records draw winners by penalties/decision and re-scoring corrects results without database surgery; the final winner is marked and editable. `Reset knockout stage` (`POST .../knockout/reset`) rebuilds the bracket from scratch.
 
 #### ADM-06: Add admin reset and demo utilities
-
-- Owner: Admin/backend
-- Depends on: DB-04
-- Work:
-  - Reset a tournament to setup.
-  - Delete generated fixtures.
-  - Seed a demo tournament locally.
-- Acceptance:
-  - Reset actions require confirmation.
-  - Demo flows can be run repeatedly for testing.
+✅ **Done.** Admin tournament pages now include confirmed reset utilities that delete generated group/knockout fixtures and scores, return the tournament to setup, and keep teams for regeneration. The reset route also requires a server-side confirmation token. `npm run demo:seed` creates a fresh local demo tournament through the app APIs, so rehearsal data can be generated repeatedly without hand editing.
 
 #### ADM-07: Build team management CRUD
 ✅ **Done.** `ManageTeams` component in `app/admin/tournament/[id]/manage-teams.tsx`. Create, edit, reorder, delete with confirmation. All mutations locked once fixtures exist. Aria-labels on all icon buttons.
 
 #### ADM-08: Define safe team mutations after fixtures exist
-
-- Owner: Admin/engine/backend
-- Depends on: ADM-07, ENG-05
-- Work:
-  - Decide which post-fixture team changes are permitted (for example rename-only).
-  - Define how allowed mutations impact fixtures, standings, and knockout progression.
-  - Add confirmation UX and rollback/reset pathways for risky or destructive actions.
-- Acceptance:
-  - Organisers can understand exactly which team edits are safe after fixtures exist.
-  - Unsafe edits are blocked or routed through explicit reset/regenerate flows.
-  - Tournament integrity remains valid after any permitted mutation.
+✅ **Done.** Once fixtures exist, team IDs and tournament structure are locked but team names remain editable. Renames are safe because fixtures, standings, and knockout progression reference team IDs; add/remove/reorder attempts remain blocked and the admin UI routes organisers to the confirmed reset/regenerate pathway for structural changes.
 
 ### Public Spectator Experience
 
@@ -138,14 +119,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** Failed score saves are stored in a local retry queue, deduped by match, retried on page load and browser `online`, and can be manually retried from the score panel.
 
 #### OFF-03: Add lightweight cache strategy
-
-- Owner: Resilience/frontend
-- Depends on: PUB-02
-- Work:
-  - Cache public data where sensible.
-  - Avoid large service-worker complexity unless it proves necessary.
-- Acceptance:
-  - Repeat visits load quickly on weak mobile signal.
+✅ **Done.** The service worker now separates static assets, public pages, and public tournament JSON. Public tournament payloads use stale-while-revalidate for fast repeat loads on weak signal, while admin routes and write requests stay network-only.
 
 ### Design And Accessibility
 
@@ -153,16 +127,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** Brand tokens (ink/blood/chalk/pitch/sky/gold), Bebas Neue display font, hard shadows, and uppercase tracking applied throughout. See `tailwind.config.ts` and `app/globals.css`.
 
 #### UI-02: Mobile touch and readability pass
-
-- Owner: UI/accessibility
-- Depends on: ADM-04, PUB-02
-- Work:
-  - Check tap target sizes.
-  - Check table scrolling and text wrapping on small phones.
-  - Avoid overlapping content.
-- Acceptance:
-  - Admin score entry works one-handed.
-  - Public table and fixtures are readable on a narrow mobile screen.
+✅ **Done.** Score steppers and utility controls meet 44px touch targets, admin team controls avoid narrow-grid overflow, and public tables/match/bracket cards use stable columns with wrapping or horizontal scrolling where needed.
 
 #### UI-03: Browser verification pass
 
@@ -179,37 +144,13 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ### Testing And Quality
 
 #### QA-01: Add engine unit tests
-
-- Owner: QA/engine
-- Depends on: ENG-01, ENG-02, ENG-03, ENG-04
-- Work:
-  - Cover standings, fixture generation, knockout seeding, and bracket progression.
-- Acceptance:
-  - Tournament logic can be changed safely.
+✅ **Done.** `lib/tournament.test.ts` covers standings, round-robin generation, knockout seeding/progression, winner resolution, round completeness, and reversible/resettable tournament state transitions.
 
 #### QA-02: Add route and API tests
-
-- Owner: QA/backend
-- Depends on: ADM-02, ADM-04, DB-03
-- Work:
-  - Test admin auth route.
-  - Test tournament creation.
-  - Test score update and validation.
-- Acceptance:
-  - Invalid writes are rejected.
-  - Valid admin writes persist.
+✅ **Done.** `app/api/admin/admin-routes.test.ts` covers admin login, tournament creation, score validation/persistence, post-fixture rename-only team edits, blocked structural team changes, and confirmed tournament reset behavior with mocked Supabase clients.
 
 #### QA-03: Add end-to-end smoke test
-
-- Owner: QA
-- Depends on: PUB-02, ADM-04
-- Work:
-  - Create a demo tournament.
-  - Generate fixtures.
-  - Enter a score.
-  - Confirm standings update publicly.
-- Acceptance:
-  - One command verifies the core day-of-event flow.
+✅ **Done.** `npm run smoke:e2e` runs the day-of-event flow against a running app: login, create a demo tournament, generate fixtures, enter a score, and confirm the public fixture and standings update. `npm run demo:seed` runs the same setup flow without scoring for repeatable demo data.
 
 ### Deployment
 

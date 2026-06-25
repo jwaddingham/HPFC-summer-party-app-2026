@@ -238,7 +238,9 @@ describe('tournament state machine', () => {
 
   it('keeps every stage reversible so organisers are never trapped', () => {
     expect(canTransition('group_stage', 'setup')).toBe(true);
+    expect(canTransition('knockout_stage', 'setup')).toBe(true);
     expect(canTransition('knockout_stage', 'group_stage')).toBe(true);
+    expect(canTransition('complete', 'setup')).toBe(true);
     expect(canTransition('complete', 'knockout_stage')).toBe(true);
     expect(canTransition('complete', 'group_stage')).toBe(true);
   });

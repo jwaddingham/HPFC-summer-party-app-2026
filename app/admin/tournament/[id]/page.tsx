@@ -5,6 +5,7 @@ import { AdminGuard } from '@/components/admin/AdminGuard';
 import { getSupabasePublicClient } from '@/lib/supabase/server';
 import { buildTable } from '@/lib/tournament';
 import type { Match, Team } from '@/lib/types';
+import { AdminToolsPanel } from './admin-tools-panel';
 import { FixturePanel } from './fixture-panel';
 import { KnockoutPanel, type KnockoutMatchRow } from './knockout-panel';
 import { ManageTeams } from './manage-teams';
@@ -85,6 +86,9 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
           seedOrder={seedOrder}
           initialKnockoutMatches={knockoutMatches}
         />
+
+        {/* Reset and rehearsal utilities */}
+        <AdminToolsPanel tournamentId={id} status={tournament.status} matchCount={allMatches.length} />
       </div>
       </div>
     </AdminGuard>

@@ -24,6 +24,7 @@ module.exports = {
   },
   ignorePatterns: [
     '.next/',
+    '.claude/',
     'out/',
     'build/',
     'next-env.d.ts',

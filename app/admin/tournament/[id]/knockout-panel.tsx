@@ -45,7 +45,7 @@ function ScoreStepper({
     <div className="flex items-center justify-center gap-2">
       <button
         type="button"
-        className="w-10 h-10 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
+        className="h-11 w-11 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
         onClick={() => onChange(Math.max(0, value - 1))}
         aria-label={`Decrease ${label} score`}
       >
@@ -54,7 +54,7 @@ function ScoreStepper({
       <span className="font-display text-3xl text-ink w-8 text-center tabular-nums">{value}</span>
       <button
         type="button"
-        className="w-10 h-10 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
+        className="h-11 w-11 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
         onClick={() => onChange(value + 1)}
         aria-label={`Increase ${label} score`}
       >

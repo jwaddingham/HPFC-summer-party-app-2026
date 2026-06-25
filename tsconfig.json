@@ -36,6 +36,7 @@
   ],
   "exclude": [
     "node_modules",
+    ".claude",
     "HPFC-summer-party-app-2026",
     "Magic Patterns design",
     "docs"

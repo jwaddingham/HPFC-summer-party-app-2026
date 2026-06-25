@@ -13,6 +13,8 @@
     "db:migrate:local": "supabase db push --local",
     "db:migrate:remote": "supabase db push --db-url \"$SUPABASE_DB_URL\" --password \"$SUPABASE_DB_PASSWORD\"",
     "db:reset:local": "supabase db reset --local",
+    "demo:seed": "node scripts/day-flow-smoke.mjs --seed-only",
+    "smoke:e2e": "node scripts/day-flow-smoke.mjs",
     "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {

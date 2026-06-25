@@ -1,14 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getAdminHeaders } from '@/lib/admin-session';
 
 interface TeamRow { id: string; name: string; }
 
 export function ManageTeams({ tournamentId, initialTeams, locked }: { tournamentId: string; initialTeams: TeamRow[]; locked: boolean }) {
+  const router = useRouter();
   const [teams, setTeams] = useState<TeamRow[]>(initialTeams);
   const [newTeamName, setNewTeamName] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
 
   function reorder(from: number, to: number) {
@@ -22,6 +25,7 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
   async function saveNames() {
     setSaving(true);
     setError('');
+    setNotice('');
     const response = await fetch(`/api/admin/tournament/${tournamentId}/teams`, {
       method: 'PATCH',
       headers: getAdminHeaders({ json: true }),
@@ -29,12 +33,18 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
     });
     const body = (await response.json().catch(() => ({}))) as { error?: string };
     setSaving(false);
-    if (!response.ok) setError(body.error ?? 'Could not save teams.');
+    if (!response.ok) {
+      setError(body.error ?? 'Could not save teams.');
+      return;
+    }
+    setNotice('Team names saved. Fixtures and standings now use the updated names.');
+    router.refresh();
   }
 
   async function addTeam() {
     setSaving(true);
     setError('');
+    setNotice('');
     const response = await fetch(`/api/admin/tournament/${tournamentId}/teams`, {
       method: 'POST',
       headers: getAdminHeaders({ json: true }),
@@ -55,6 +65,7 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
     }
     setSaving(true);
     setError('');
+    setNotice('');
     const response = await fetch(`/api/admin/tournament/${tournamentId}/teams/${teamId}`, {
       method: 'DELETE',
       headers: getAdminHeaders(),
@@ -73,28 +84,29 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
       <div className="mb-2">
         <h2 className="font-display text-2xl text-ink tracking-wide mb-1">Manage teams</h2>
         {locked && (
-          <p className="text-xs text-gold font-semibold uppercase tracking-wider">
-            ⚠️ Team changes locked - fixtures exist
-          </p>
+          <div className="mt-2 border-2 border-gold bg-gold/10 p-3 text-xs font-semibold text-ink">
+            <p className="uppercase tracking-wider text-gold">Fixtures exist</p>
+            <p>Team names are safe to edit. Adding, removing, or reordering teams needs a tournament reset.</p>
+          </div>
         )}
       </div>
 
       <div className="space-y-2">
         {teams.map((team, index) => (
-          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2" key={team.id}>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-2" key={team.id}>
             <input
-              className="border-2 border-ink p-2 focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
+              className="min-w-0 border-2 border-ink p-2 focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
               value={team.name}
               onChange={(event) => {
                 const value = event.target.value;
                 setTeams((previous) => previous.map((item, itemIndex) => (itemIndex === index ? { ...item, name: value } : item)));
               }}
-              disabled={locked}
+              disabled={saving}
             />
             <button
-              className="border-2 border-ink p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
+              className="h-11 w-11 border-2 border-ink p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
               onClick={() => reorder(index, index - 1)}
-              disabled={locked}
+              disabled={locked || saving}
               type="button"
               aria-label="Move team up"
               title="Move team up"
@@ -102,9 +114,9 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
               ↑
             </button>
             <button
-              className="border-2 border-ink p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
+              className="h-11 w-11 border-2 border-ink p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
               onClick={() => reorder(index, index + 1)}
-              disabled={locked}
+              disabled={locked || saving}
               type="button"
               aria-label="Move team down"
               title="Move team down"
@@ -112,9 +124,9 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
               ↓
             </button>
             <button
-              className="border-2 border-blood text-blood p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
+              className="h-11 w-11 border-2 border-blood text-blood p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
               onClick={() => removeTeam(team.id)}
-              disabled={locked || teams.length <= 4}
+              disabled={locked || teams.length <= 4 || saving}
               type="button"
               aria-label="Remove team"
               title="Remove team"
@@ -127,7 +139,7 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
 
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <input
-          className="border-2 border-ink p-3 focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
+          className="min-w-0 border-2 border-ink p-3 focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
           placeholder="Team name"
           value={newTeamName}
           onChange={(event) => setNewTeamName(event.target.value)}
@@ -147,10 +159,16 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
         className="w-full bg-ink text-white font-bold py-3 px-4 border-2 border-ink shadow-hard hover:shadow-hard active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 uppercase tracking-wider text-sm"
         type="button"
         onClick={saveNames}
-        disabled={locked || saving}
+        disabled={saving}
       >
-        {saving ? 'Saving...' : 'Save team changes'}
+        {saving ? 'Saving...' : locked ? 'Save team names' : 'Save team changes'}
       </button>
+
+      {notice && (
+        <div className="bg-pitch/10 border-2 border-pitch p-3">
+          <p className="text-pitch font-semibold text-sm">{notice}</p>
+        </div>
+      )}
 
       {error && (
         <div className="bg-blood/10 border-2 border-blood p-3">
