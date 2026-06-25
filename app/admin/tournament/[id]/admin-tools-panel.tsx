@@ -53,6 +53,11 @@ export function AdminToolsPanel({
       return;
     }
 
+    pendo.track('tournament_reset', {
+      tournament_id: tournamentId,
+      previous_status: status,
+      deleted_matches_count: payload.deletedMatches ?? 0,
+    });
     setNotice(`Tournament reset. Deleted ${payload.deletedMatches ?? 0} generated match${payload.deletedMatches === 1 ? '' : 'es'}.`);
     setResetPhrase('');
     router.refresh();
