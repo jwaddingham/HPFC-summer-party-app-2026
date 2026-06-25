@@ -213,5 +213,7 @@ export function buildTable(teams: Team[], matches: Match[]) {
     }
   });
 
-  return Object.values(rows).map((r) => ({ ...r, gd: r.gf - r.ga })).sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+  return Object.values(rows)
+    .map((r) => ({ ...r, gd: r.gf - r.ga }))
+    .sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf || a.teamId.localeCompare(b.teamId));
 }

@@ -94,7 +94,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** `ManageTeams` component in `app/admin/tournament/[id]/manage-teams.tsx`. Create, edit, reorder, delete with confirmation. All mutations locked once fixtures exist. Aria-labels on all icon buttons.
 
 #### ADM-08: Define safe team mutations after fixtures exist
-✅ **Done.** Once fixtures exist, team IDs and tournament structure are locked. Team names remain editable only until the first score is saved; after results exist, names are locked too because they are the final standings tie-breaker and can affect default knockout seeding. Add/remove/reorder attempts remain blocked and the admin UI routes organisers to the confirmed reset/regenerate pathway for structural changes.
+✅ **Done.** Once fixtures exist, team IDs and tournament structure are locked. Team display names remain editable for typo fixes because standings and default knockout seeding now use the immutable team ID as the final tie-breaker, so renaming cannot reshuffle tied rankings. Add/remove/reorder attempts remain blocked and the admin UI routes organisers to the confirmed reset/regenerate pathway for structural changes.
 
 ### Public Spectator Experience
 
@@ -147,7 +147,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** `lib/tournament.test.ts` covers standings, round-robin generation, knockout seeding/progression, winner resolution, round completeness, and reversible/resettable tournament state transitions.
 
 #### QA-02: Add route and API tests
-✅ **Done.** `app/api/admin/admin-routes.test.ts` covers admin login, tournament creation, score validation/persistence, post-fixture rename-only team edits, blocked structural team changes, and confirmed tournament reset behavior with mocked Supabase clients.
+✅ **Done.** `app/api/admin/admin-routes.test.ts` covers admin login, tournament creation, score validation/persistence, post-fixture rename-only team edits, blocked structural team changes, and confirmed tournament reset behavior with mocked Supabase clients. `lib/tournament.test.ts` also verifies tied standings use stable team IDs rather than mutable display names.
 
 #### QA-03: Add end-to-end smoke test
 ✅ **Done.** `npm run smoke:e2e` runs the day-of-event flow against a running app: login, create a demo tournament, generate fixtures, enter a score, and confirm the public fixture and standings update. `npm run demo:seed` runs the same setup flow without scoring for repeatable demo data.

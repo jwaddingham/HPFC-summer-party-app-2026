@@ -23,7 +23,6 @@ export function ManageTeams({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
-  const canRenameTeams = !locked || !hasCompletedMatches;
 
   function reorder(from: number, to: number) {
     if (to < 0 || to >= teams.length) return;
@@ -99,8 +98,8 @@ export function ManageTeams({
             <p className="uppercase tracking-wider text-gold">Fixtures exist</p>
             <p>
               {hasCompletedMatches
-                ? 'Scores are saved, so team names are locked to keep standings tie-breaks and knockout seeding stable. Reset before structural edits.'
-                : 'Team names are safe to edit until the first score is saved. Adding, removing, or reordering teams needs a tournament reset.'}
+                ? 'Scores are saved, but typo fixes are still safe: the final ranking tie-breaker uses stable team IDs. Adding, removing, or reordering teams needs a reset.'
+                : 'Team names are safe to edit. Adding, removing, or reordering teams needs a tournament reset once fixtures exist.'}
             </p>
           </div>
         )}
@@ -116,7 +115,7 @@ export function ManageTeams({
                 const value = event.target.value;
                 setTeams((previous) => previous.map((item, itemIndex) => (itemIndex === index ? { ...item, name: value } : item)));
               }}
-              disabled={!canRenameTeams || saving}
+              disabled={saving}
             />
             <button
               className="h-11 w-11 border-2 border-ink p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
@@ -174,9 +173,9 @@ export function ManageTeams({
         className="w-full bg-ink text-white font-bold py-3 px-4 border-2 border-ink shadow-hard hover:shadow-hard active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 uppercase tracking-wider text-sm"
         type="button"
         onClick={saveNames}
-        disabled={!canRenameTeams || saving}
+        disabled={saving}
       >
-        {saving ? 'Saving...' : !canRenameTeams ? 'Team names locked' : locked ? 'Save team names' : 'Save team changes'}
+        {saving ? 'Saving...' : locked ? 'Save team names' : 'Save team changes'}
       </button>
 
       {notice && (
