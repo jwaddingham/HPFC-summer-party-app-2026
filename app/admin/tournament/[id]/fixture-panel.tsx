@@ -199,7 +199,7 @@ function ScoreEntry({
         <div className="flex items-center justify-center gap-2">
           <button
             type="button"
-            className="w-10 h-10 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
+            className="h-11 w-11 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
             onClick={() => setHomeScore((s) => Math.max(0, s - 1))}
             aria-label="Decrease home score"
           >
@@ -208,7 +208,7 @@ function ScoreEntry({
           <span className="font-display text-3xl text-ink w-8 text-center tabular-nums">{homeScore}</span>
           <button
             type="button"
-            className="w-10 h-10 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
+            className="h-11 w-11 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
             onClick={() => setHomeScore((s) => s + 1)}
             aria-label="Increase home score"
           >
@@ -219,7 +219,7 @@ function ScoreEntry({
         <div className="flex items-center justify-center gap-2">
           <button
             type="button"
-            className="w-10 h-10 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
+            className="h-11 w-11 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
             onClick={() => setAwayScore((s) => Math.max(0, s - 1))}
             aria-label="Decrease away score"
           >
@@ -228,7 +228,7 @@ function ScoreEntry({
           <span className="font-display text-3xl text-ink w-8 text-center tabular-nums">{awayScore}</span>
           <button
             type="button"
-            className="w-10 h-10 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
+            className="h-11 w-11 border-2 border-ink font-bold text-xl flex items-center justify-center active:bg-ink active:text-white transition-colors"
             onClick={() => setAwayScore((s) => s + 1)}
             aria-label="Increase away score"
           >

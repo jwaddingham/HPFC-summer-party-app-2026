@@ -8,8 +8,8 @@ import { Match, MatchStage, Team, TournamentStatus } from './types';
 export const TOURNAMENT_TRANSITIONS: Record<TournamentStatus, TournamentStatus[]> = {
   setup: ['group_stage'],
   group_stage: ['setup', 'knockout_stage'],
-  knockout_stage: ['group_stage', 'complete'],
-  complete: ['knockout_stage', 'group_stage'],
+  knockout_stage: ['setup', 'group_stage', 'complete'],
+  complete: ['setup', 'knockout_stage', 'group_stage'],
 };
 
 export function canTransition(from: TournamentStatus, to: TournamentStatus) {
@@ -213,5 +213,7 @@ export function buildTable(teams: Team[], matches: Match[]) {
     }
   });
 
-  return Object.values(rows).map((r) => ({ ...r, gd: r.gf - r.ga })).sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+  return Object.values(rows)
+    .map((r) => ({ ...r, gd: r.gf - r.ga }))
+    .sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf || a.teamId.localeCompare(b.teamId));
 }

@@ -25,9 +25,9 @@ export function MatchTile({
   const isCompleted = status === 'completed';
 
   const containerClasses = `
-    flex items-center justify-between border-2
+    grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-2
     ${isLive ? 'border-blood bg-white' : isCompleted ? 'border-ink bg-ink text-white' : 'border-ink bg-chalk'}
-    ${compact ? 'p-2' : 'p-3'}
+    ${compact ? 'gap-2 p-2' : 'gap-3 p-3'}
   `;
 
   return (
@@ -42,12 +42,12 @@ export function MatchTile({
       }}
     >
       {/* Left side: Home Team */}
-      <div className={`flex-1 text-right ${compact ? 'text-sm' : 'text-base font-bold'} truncate pr-3`}>
+      <div className={`min-w-0 text-right leading-tight ${compact ? 'text-sm' : 'text-base font-bold'} break-words`}>
         {home}
       </div>
 
       {/* Center: Score / Time */}
-      <div className="flex flex-col items-center justify-center px-4 min-w-[80px]">
+      <div className="flex min-w-[4.5rem] flex-col items-center justify-center">
         {isCompleted && (
           <div className={`font-display tracking-wider flex items-center gap-2 ${compact ? 'text-2xl' : 'text-4xl'}`}>
             <span>{homeScore ?? 0}</span>
@@ -73,7 +73,7 @@ export function MatchTile({
         )}
 
         {!isCompleted && !isLive && (
-          <div className="font-display text-xl text-gray-500 tracking-wider">{time || 'TBD'}</div>
+          <div className="font-display text-center text-lg text-gray-500 tracking-wider sm:text-xl">{time || 'TBD'}</div>
         )}
 
         {isLive && !compact && (
@@ -87,7 +87,7 @@ export function MatchTile({
       </div>
 
       {/* Right side: Away Team */}
-      <div className={`flex-1 text-left ${compact ? 'text-sm' : 'text-base font-bold'} truncate pl-3`}>
+      <div className={`min-w-0 text-left leading-tight ${compact ? 'text-sm' : 'text-base font-bold'} break-words`}>
         {away}
       </div>
     </div>

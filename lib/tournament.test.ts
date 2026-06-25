@@ -57,7 +57,7 @@ describe('buildTable', () => {
     ]);
   });
 
-  it('sorts by points, goal difference, goals for, then team name', () => {
+  it('sorts by points, goal difference, goals for, then stable team ID', () => {
     const teams = [
       team('reds', 'Reds'),
       team('blues', 'Blues'),
@@ -72,12 +72,26 @@ describe('buildTable', () => {
 
     expect(goalsForRows.map((row) => row.team)).toEqual(['Blues', 'Reds', 'Golds', 'Whites']);
 
-    const alphabeticalRows = buildTable(teams, [
+    const stableRows = buildTable(teams, [
       match({ id: 'm3', home_team_id: 'reds', away_team_id: 'whites', home_score: 2, away_score: 0 }),
       match({ id: 'm4', home_team_id: 'golds', away_team_id: 'blues', home_score: 2, away_score: 0 }),
     ]);
 
-    expect(alphabeticalRows.map((row) => row.team)).toEqual(['Golds', 'Reds', 'Blues', 'Whites']);
+    expect(stableRows.map((row) => row.team)).toEqual(['Golds', 'Reds', 'Blues', 'Whites']);
+  });
+
+  it('keeps tied standings stable when display names change', () => {
+    const rows = buildTable([team('team-b', 'Alpha'), team('team-a', 'Zulu')], [
+      match({
+        id: 'm1',
+        home_team_id: 'team-a',
+        away_team_id: 'team-b',
+        home_score: 1,
+        away_score: 1,
+      }),
+    ]);
+
+    expect(rows.map((row) => row.team)).toEqual(['Zulu', 'Alpha']);
   });
 
   it('ignores incomplete, non-group, missing-score, and unknown-team matches', () => {
@@ -238,7 +252,9 @@ describe('tournament state machine', () => {
 
   it('keeps every stage reversible so organisers are never trapped', () => {
     expect(canTransition('group_stage', 'setup')).toBe(true);
+    expect(canTransition('knockout_stage', 'setup')).toBe(true);
     expect(canTransition('knockout_stage', 'group_stage')).toBe(true);
+    expect(canTransition('complete', 'setup')).toBe(true);
     expect(canTransition('complete', 'knockout_stage')).toBe(true);
     expect(canTransition('complete', 'group_stage')).toBe(true);
   });

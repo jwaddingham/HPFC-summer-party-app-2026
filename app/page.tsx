@@ -67,9 +67,11 @@ export default async function Home() {
             href={`/tournament/${t.id}`}
             className="bg-white border-2 border-ink shadow-hard p-4 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all block hover:bg-chalk"
           >
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="font-display text-2xl leading-none w-2/3">{t.name}</h3>
-              <StatusPill status={t.status} />
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h3 className="min-w-0 flex-1 break-words font-display text-2xl leading-none">{t.name}</h3>
+              <div className="shrink-0">
+                <StatusPill status={t.status} />
+              </div>
             </div>
 
             <div className="space-y-2 mb-4 text-sm text-gray-600">
@@ -79,16 +81,20 @@ export default async function Home() {
               </div>
 
               {t.leader && (
-                <div className="flex items-center">
-                  <Trophy className="mr-2 h-4 w-4 text-gold" aria-hidden="true" />
-                  Leader: <span className="font-bold text-ink ml-1">{t.leader}</span>
+                <div className="flex items-start min-w-0">
+                  <Trophy className="mr-2 mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden="true" />
+                  <span className="min-w-0">
+                    Leader: <span className="font-bold text-ink">{t.leader}</span>
+                  </span>
                 </div>
               )}
 
               {t.nextMatch && (
-                <div className="flex items-center">
-                  <Clock className="mr-2 h-4 w-4 text-blood" aria-hidden="true" />
-                  Next: <span className="font-bold text-ink ml-1">{t.nextMatch}</span>
+                <div className="flex items-start min-w-0">
+                  <Clock className="mr-2 mt-0.5 h-4 w-4 shrink-0 text-blood" aria-hidden="true" />
+                  <span className="min-w-0">
+                    Next: <span className="font-bold text-ink">{t.nextMatch}</span>
+                  </span>
                 </div>
               )}
             </div>

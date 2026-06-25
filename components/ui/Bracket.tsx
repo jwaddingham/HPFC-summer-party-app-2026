@@ -53,8 +53,8 @@ export function Bracket({ matches = [], qualifyingCount = 4 }: { matches?: Knock
 
 function BracketTeam({ name, score, isComplete }: { name: string; score: number | null; isComplete: boolean }) {
   return (
-    <div className="flex items-center justify-between border border-ink bg-chalk p-2 text-sm font-bold text-ink">
-      <span className="truncate pr-2">{name}</span>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border border-ink bg-chalk p-2 text-sm font-bold text-ink">
+      <span className="min-w-0 break-words leading-tight">{name}</span>
       {isComplete ? <span className="font-display text-xl tabular-nums">{score ?? 0}</span> : null}
     </div>
   );

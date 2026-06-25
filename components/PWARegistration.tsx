@@ -6,11 +6,8 @@ export function PWARegistration() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then(registration => {
-          console.log('ServiceWorker registered:', registration);
-        })
-        .catch(error => {
-          console.log('ServiceWorker registration failed:', error);
+        .catch(() => {
+          // The app still works without the lightweight offline cache.
         });
     }
   }, []);
