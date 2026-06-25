@@ -242,11 +242,18 @@ function KnockoutDraw({
     setGenerating(true);
     setError('');
 
-    const response = await fetch(`/api/admin/tournament/${tournamentId}/knockout/generate`, {
-      method: 'POST',
-      headers: getAdminHeaders({ json: true }),
-      body: JSON.stringify({ mode, seeds: seeds.map((seed) => seed.id) }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`/api/admin/tournament/${tournamentId}/knockout/generate`, {
+        method: 'POST',
+        headers: getAdminHeaders({ json: true }),
+        body: JSON.stringify({ mode, seeds: seeds.map((seed) => seed.id) }),
+      });
+    } catch {
+      setGenerating(false);
+      setError('Could not reach the server. Your seeding is kept — check your connection and try again.');
+      return;
+    }
 
     const payload = (await response.json().catch(() => ({}))) as { error?: string };
     if (!response.ok) {
@@ -395,10 +402,17 @@ function KnockoutBracketAdmin({
     setResetting(true);
     setError('');
 
-    const response = await fetch(`/api/admin/tournament/${tournamentId}/knockout/reset`, {
-      method: 'POST',
-      headers: getAdminHeaders(),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`/api/admin/tournament/${tournamentId}/knockout/reset`, {
+        method: 'POST',
+        headers: getAdminHeaders(),
+      });
+    } catch {
+      setResetting(false);
+      setError('Could not reach the server. Check your connection and try again.');
+      return;
+    }
 
     const payload = (await response.json().catch(() => ({}))) as { error?: string };
     if (!response.ok) {
