@@ -111,7 +111,6 @@ function ScoreEntry({
       away_score: awayScore,
       status: 'complete',
     };
-    onSaved(optimistic);
     upsertPendingScore({
       tournamentId,
       matchId: match.id,
@@ -132,6 +131,7 @@ function ScoreEntry({
         }
       );
     } catch {
+      onSaved(optimistic);
       setSaving(false);
       setError('Saved locally. Will retry when connection returns.');
       return;
@@ -143,7 +143,6 @@ function ScoreEntry({
     if (!response.ok) {
       removePendingScore(tournamentId, match.id);
       onPendingChange();
-      onSaved(match);
       setError(
         response.status === 401
           ? 'Admin session expired. Log in again, then save this result.'
@@ -289,6 +288,14 @@ export function FixturePanel({
   const teamNames = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
   const pendingMatchIds = useMemo(() => new Set(pendingScores.map((score) => score.matchId)), [pendingScores]);
 
+  const formatMatchLabel = useCallback((match: MatchRow | undefined) => {
+    if (!match) return 'the affected match';
+
+    const homeTeam = teamNames.get(match.home_team_id) ?? 'Unknown team';
+    const awayTeam = teamNames.get(match.away_team_id) ?? 'Unknown team';
+    return `Round ${match.round_number}: ${homeTeam} vs ${awayTeam}`;
+  }, [teamNames]);
+
   const refreshPendingScores = useCallback(() => {
     setPendingScores(getPendingScoresForTournament(tournamentId));
   }, [tournamentId]);
@@ -315,13 +322,14 @@ export function FixturePanel({
       if (!response.ok) {
         removePendingScore(tournamentId, pending.matchId);
         const serverMatch = initialMatches.find((match) => match.id === pending.matchId);
+        const matchLabel = formatMatchLabel(serverMatch);
         if (serverMatch) {
           setMatches((prev) => prev.map((match) => (match.id === pending.matchId ? serverMatch : match)));
         }
         setError(
           response.status === 401
-            ? 'A queued result was rejected because admin access expired. Log in again and save it again.'
-            : 'A queued result was rejected. Please check the score and save it again.',
+            ? `Queued result for ${matchLabel} was rejected because admin access expired. Log in again and save it again.`
+            : `Queued result for ${matchLabel} was rejected. Please check the score and save it again.`,
         );
         continue;
       }
@@ -334,7 +342,7 @@ export function FixturePanel({
     }
 
     refreshPendingScores();
-  }, [initialMatches, refreshPendingScores, tournamentId]);
+  }, [formatMatchLabel, initialMatches, refreshPendingScores, tournamentId]);
 
   useEffect(() => {
     setMatches(applyPendingScores(initialMatches, tournamentId));
