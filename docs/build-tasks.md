@@ -94,7 +94,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** `ManageTeams` component in `app/admin/tournament/[id]/manage-teams.tsx`. Create, edit, reorder, delete with confirmation. All mutations locked once fixtures exist. Aria-labels on all icon buttons.
 
 #### ADM-08: Define safe team mutations after fixtures exist
-✅ **Done.** Once fixtures exist, team IDs and tournament structure are locked but team names remain editable. Renames are safe because fixtures, standings, and knockout progression reference team IDs; add/remove/reorder attempts remain blocked and the admin UI routes organisers to the confirmed reset/regenerate pathway for structural changes.
+✅ **Done.** Once fixtures exist, team IDs and tournament structure are locked. Team names remain editable only until the first score is saved; after results exist, names are locked too because they are the final standings tie-breaker and can affect default knockout seeding. Add/remove/reorder attempts remain blocked and the admin UI routes organisers to the confirmed reset/regenerate pathway for structural changes.
 
 ### Public Spectator Experience
 

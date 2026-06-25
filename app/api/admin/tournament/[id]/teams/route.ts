@@ -14,6 +14,18 @@ async function hasFixtures(tournamentId: string) {
   return (count ?? 0) > 0;
 }
 
+async function hasCompletedMatches(tournamentId: string) {
+  const supabase = getSupabaseAdminClient();
+  const { count, error } = await supabase
+    .from('matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('tournament_id', tournamentId)
+    .eq('status', 'complete');
+
+  if (error) throw new Error(error.message);
+  return (count ?? 0) > 0;
+}
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAdminRequest(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -73,6 +85,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (fixturesExist && hasStructuralChange) {
       return NextResponse.json(
         { error: 'Fixtures already exist. You can rename teams, but reset the tournament before adding, removing, or replacing teams.' },
+        { status: 409 },
+      );
+    }
+
+    if (fixturesExist && (await hasCompletedMatches(id))) {
+      return NextResponse.json(
+        { error: 'Scores already exist. Reset the tournament before renaming teams so standings and knockout seed order stay stable.' },
         { status: 409 },
       );
     }

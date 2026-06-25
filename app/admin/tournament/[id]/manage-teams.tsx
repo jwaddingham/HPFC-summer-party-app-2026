@@ -6,13 +6,24 @@ import { getAdminHeaders } from '@/lib/admin-session';
 
 interface TeamRow { id: string; name: string; }
 
-export function ManageTeams({ tournamentId, initialTeams, locked }: { tournamentId: string; initialTeams: TeamRow[]; locked: boolean }) {
+export function ManageTeams({
+  tournamentId,
+  initialTeams,
+  locked,
+  hasCompletedMatches,
+}: {
+  tournamentId: string;
+  initialTeams: TeamRow[];
+  locked: boolean;
+  hasCompletedMatches: boolean;
+}) {
   const router = useRouter();
   const [teams, setTeams] = useState<TeamRow[]>(initialTeams);
   const [newTeamName, setNewTeamName] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [saving, setSaving] = useState(false);
+  const canRenameTeams = !locked || !hasCompletedMatches;
 
   function reorder(from: number, to: number) {
     if (to < 0 || to >= teams.length) return;
@@ -86,7 +97,11 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
         {locked && (
           <div className="mt-2 border-2 border-gold bg-gold/10 p-3 text-xs font-semibold text-ink">
             <p className="uppercase tracking-wider text-gold">Fixtures exist</p>
-            <p>Team names are safe to edit. Adding, removing, or reordering teams needs a tournament reset.</p>
+            <p>
+              {hasCompletedMatches
+                ? 'Scores are saved, so team names are locked to keep standings tie-breaks and knockout seeding stable. Reset before structural edits.'
+                : 'Team names are safe to edit until the first score is saved. Adding, removing, or reordering teams needs a tournament reset.'}
+            </p>
           </div>
         )}
       </div>
@@ -101,7 +116,7 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
                 const value = event.target.value;
                 setTeams((previous) => previous.map((item, itemIndex) => (itemIndex === index ? { ...item, name: value } : item)));
               }}
-              disabled={saving}
+              disabled={!canRenameTeams || saving}
             />
             <button
               className="h-11 w-11 border-2 border-ink p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
@@ -159,9 +174,9 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
         className="w-full bg-ink text-white font-bold py-3 px-4 border-2 border-ink shadow-hard hover:shadow-hard active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 uppercase tracking-wider text-sm"
         type="button"
         onClick={saveNames}
-        disabled={saving}
+        disabled={!canRenameTeams || saving}
       >
-        {saving ? 'Saving...' : locked ? 'Save team names' : 'Save team changes'}
+        {saving ? 'Saving...' : !canRenameTeams ? 'Team names locked' : locked ? 'Save team names' : 'Save team changes'}
       </button>
 
       {notice && (

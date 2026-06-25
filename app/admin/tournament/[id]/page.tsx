@@ -45,6 +45,7 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
   const knockoutMatches = allMatches.filter((match) => match.stage !== 'group') as KnockoutMatchRow[];
 
   const locked = allMatches.length > 0;
+  const hasCompletedMatches = allMatches.some((match) => match.status === 'complete');
   const groupComplete = groupMatches.length > 0 && groupMatches.every((match) => match.status !== 'scheduled');
   // Default seeding follows the group table; the panel lets organisers reorder.
   const seedOrder = buildTable(teamList, groupMatches).map((row) => ({ id: row.teamId, name: row.team }));
@@ -71,7 +72,7 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
       {/* Content */}
       <div className="p-4 space-y-6">
         {/* Manage Teams */}
-        <ManageTeams tournamentId={id} initialTeams={teams ?? []} locked={locked} />
+        <ManageTeams tournamentId={id} initialTeams={teams ?? []} locked={locked} hasCompletedMatches={hasCompletedMatches} />
 
         {/* Fast score entry */}
         <FixturePanel tournamentId={id} teams={teamList} initialMatches={groupMatches} />

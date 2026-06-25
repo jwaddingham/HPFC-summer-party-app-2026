@@ -179,6 +179,7 @@ describe('score update route', () => {
 
 describe('team mutation route', () => {
   it('allows rename-only updates after fixtures exist', async () => {
+    let matchSelectCall = 0;
     const update = vi.fn((value: { name: string }) => ({
       eq: vi.fn(() => ({
         eq: vi.fn(async () => ({ error: null, value })),
@@ -189,9 +190,17 @@ describe('team mutation route', () => {
       from: vi.fn((table: string) => {
         if (table === 'matches') {
           return {
-            select: vi.fn(() => ({
-              eq: vi.fn(async () => ({ count: 2, error: null })),
-            })),
+            select: vi.fn(() => {
+              matchSelectCall += 1;
+              if (matchSelectCall === 1) {
+                return { eq: vi.fn(async () => ({ count: 2, error: null })) };
+              }
+              return {
+                eq: vi.fn(() => ({
+                  eq: vi.fn(async () => ({ count: 0, error: null })),
+                })),
+              };
+            }),
           };
         }
         if (table === 'teams') {
@@ -227,6 +236,61 @@ describe('team mutation route', () => {
     expect(update).toHaveBeenCalledWith({ name: 'Blues' });
     expect(update).toHaveBeenCalledWith({ name: 'Golds' });
     expect(update).toHaveBeenCalledWith({ name: 'Whites' });
+  });
+
+  it('blocks renames after scores exist so tied standings stay stable', async () => {
+    let matchSelectCall = 0;
+    const update = vi.fn();
+
+    getSupabaseAdminClientMock.mockReturnValue({
+      from: vi.fn((table: string) => {
+        if (table === 'matches') {
+          return {
+            select: vi.fn(() => {
+              matchSelectCall += 1;
+              if (matchSelectCall === 1) {
+                return { eq: vi.fn(async () => ({ count: 2, error: null })) };
+              }
+              return {
+                eq: vi.fn(() => ({
+                  eq: vi.fn(async () => ({ count: 1, error: null })),
+                })),
+              };
+            }),
+          };
+        }
+        if (table === 'teams') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(async () => ({
+                data: [{ id: 'reds' }, { id: 'blues' }, { id: 'golds' }, { id: 'whites' }],
+                error: null,
+              })),
+            })),
+            update,
+          };
+        }
+        throw new Error(`Unexpected table ${table}`);
+      }),
+    });
+
+    const response = await patchTeams(
+      request('PATCH', '/api/admin/tournament/tournament-1/teams', {
+        teams: [
+          { id: 'reds', name: 'Reds renamed' },
+          { id: 'blues', name: 'Blues' },
+          { id: 'golds', name: 'Golds' },
+          { id: 'whites', name: 'Whites' },
+        ],
+      }),
+      { params: Promise.resolve({ id: 'tournament-1' }) },
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      error: 'Scores already exist. Reset the tournament before renaming teams so standings and knockout seed order stay stable.',
+    });
+    expect(response.status).toBe(409);
+    expect(update).not.toHaveBeenCalled();
   });
 
   it('blocks structural team changes after fixtures exist', async () => {
