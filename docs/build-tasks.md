@@ -133,6 +133,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 
 - Owner: QA/UI
 - Depends on: UI-02
+- Status: In progress. Launch-branch checks started and the production build was verified. The stale Next.js `typedRoutes` config warning found during the check was removed. Automated screenshot capture still needs to be run in an environment with an available browser binary.
 - Work:
   - Run desktop and mobile viewport checks.
   - Capture screenshots of admin and public flows.
@@ -158,10 +159,10 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 
 - Owner: Deployment
 - Depends on: F-02, DB-03
-- Work:
-  - Configure Vercel project.
-  - Set env vars.
-  - Confirm build command and output.
+- Status: In progress. Vercel runtime variables shown as configured for Production and Preview: `ADMIN_ACCESS_CODE`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. `SUPABASE_DB_URL` and `SUPABASE_DB_PASSWORD` remain GitHub/Supabase migration secrets, not Vercel runtime variables.
+- Remaining work:
+  - Confirm Vercel preview deployment builds successfully.
+  - Verify the deployed preview can read public tournament data and write admin changes against the intended Supabase project.
 - Acceptance:
   - Preview deployment builds successfully.
 
