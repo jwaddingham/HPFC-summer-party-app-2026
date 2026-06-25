@@ -65,28 +65,10 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** `generateKnockoutFixtures()` in `lib/tournament.ts` supports top-four (1v4, 2v3) and quarter-final (1v8…4v5) modes for 4, 6, and 8 team tournaments.
 
 #### ENG-04: Add knockout progression
-
-- Owner: Engine/backend
-- Depends on: ENG-03
-- Work:
-  - Progress winners into the next round.
-  - Support draw scores with explicit winner selection.
-  - Allow manual winner override after save.
-- Acceptance:
-  - Semi-final winners populate the final.
-  - Final winner is stored and displayed.
-  - Changing a previous result updates or flags dependent matches clearly.
+✅ **Done.** `resolveMatchWinner()` and `computeNextKnockoutRound()` in `lib/tournament.ts` advance winners (QF→SF→Final), with explicit winner selection for level scores. The match `PATCH` route records `winner_team_id` and `progressKnockout()` (`lib/knockout-server.ts`) populates the next round, marks the tournament complete when the final is decided, and resets/flags dependent matches when an earlier result changes. Unit-tested in `lib/tournament.test.ts`.
 
 #### ENG-05: Add state transition rules
-
-- Owner: Engine/backend
-- Depends on: DB-03
-- Work:
-  - Define allowed transitions between setup, group stage, knockout stage, and complete.
-  - Keep transitions reversible through admin actions.
-- Acceptance:
-  - App never traps organisers in an irreversible state.
-  - Manual reset and rollback paths are documented and tested.
+✅ **Done.** `TOURNAMENT_TRANSITIONS` plus `canTransition()`/`assertTransition()` in `lib/tournament.ts` define reversible setup↔group↔knockout↔complete moves. The knockout generate route enforces `group_stage → knockout_stage`; `POST .../knockout/reset` rolls back to the group stage (deleting knockout matches, keeping group results). Transitions and the never-trapped guarantee are covered by unit tests.
 
 ### Admin Experience
 
@@ -103,17 +85,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** Inline score steppers (+/− buttons, 40px tap targets) on every fixture card. Per-match save with saving/saved/error states. Scheduled matches shown first per round. Completed scores pre-filled for editing. New `PATCH /api/admin/tournament/[id]/matches/[matchId]` route. Completed matches have persistent green border and checkmark badge to distinguish from unscored ones (especially 0-0 results).
 
 #### ADM-05: Add knockout admin controls
-
-- Owner: Admin/engine
-- Depends on: ENG-03, ENG-04
-- Work:
-  - Let admins choose 8-team knockout mode.
-  - Let admins reorder seeds before generation.
-  - Record draw winners by penalties or admin decision.
-  - Manually advance teams if needed.
-- Acceptance:
-  - Generated bracket can be corrected without database surgery.
-  - Final winner can be marked and corrected.
+✅ **Done.** `KnockoutPanel` (`app/admin/tournament/[id]/knockout-panel.tsx`) lets organisers choose the format (top-4 semis, or quarter-finals when there are 8 teams), reorder seeds before drawing, and draw the bracket (`POST .../knockout/generate`). Knockout score entry records draw winners by penalties/decision and re-scoring corrects results without database surgery; the final winner is marked and editable. `Reset knockout stage` (`POST .../knockout/reset`) rebuilds the bracket from scratch.
 
 #### ADM-06: Add admin reset and demo utilities
 
