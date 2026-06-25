@@ -60,7 +60,7 @@ export default async function TournamentSharePage({ params }: { params: Promise<
         <p className="break-all border-2 border-dashed border-ink/40 bg-white p-3 font-mono text-xs text-gray-700">
           {tournamentUrl}
         </p>
-        <ShareActions url={tournamentUrl} title={tournament.name} />
+        <ShareActions url={tournamentUrl} title={tournament.name} tournamentId={id} />
       </div>
     </div>
   );
