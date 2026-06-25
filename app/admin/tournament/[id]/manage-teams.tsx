@@ -98,7 +98,7 @@ export function ManageTeams({
             <p className="uppercase tracking-wider text-gold">Fixtures exist</p>
             <p>
               {hasCompletedMatches
-                ? 'Scores are saved, but typo fixes are still safe: the final ranking tie-breaker uses stable team IDs. Adding, removing, or reordering teams needs a reset.'
+                ? 'Scores are saved — you can still fix typos in team names. Adding, removing, or reordering teams needs a reset.'
                 : 'Team names are safe to edit. Adding, removing, or reordering teams needs a tournament reset once fixtures exist.'}
             </p>
           </div>
