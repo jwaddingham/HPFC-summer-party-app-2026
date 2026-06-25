@@ -51,28 +51,12 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ✅ **Done.** Public SELECT allowed on all tables; anonymous writes blocked. Applied in `db/migrations/20260512135000_enable_rls_public_reads.sql`.
 
 #### DB-04: Add migrations and seed data
-
-- Owner: Database
-- Depends on: DB-01
-- Work:
-  - Add seed demo tournaments for 4, 6, and 8 team formats.
-  - Add reset script for local testing.
-- Acceptance:
-  - Demo data can be reset quickly.
-  - Seeded tournaments cover group and knockout scenarios.
+✅ **Done.** `supabase/seed.sql` seeds deterministic 4, 6, and 8 team demo tournaments covering setup, group-stage, and knockout/complete scenarios. `npm run db:reset:local` resets the local Supabase database and applies the seed.
 
 ### Tournament Engine
 
 #### ENG-01: Expand unit tests for `buildTable`
-
-- Owner: Engine/test
-- Depends on: F-01
-- Status: Started in `lib/tournament.test.ts`. Needs more edge cases.
-- Work:
-  - Add edge cases for equal points, equal goal difference, equal goals scored, draws, missing scores, and cancelled matches.
-  - Add tests for accidental cross-tournament or unknown team references.
-- Acceptance:
-  - Standings logic is covered by unit tests before admin/public wiring depends on it.
+✅ **Done.** `lib/tournament.test.ts` covers points, goal difference, goals scored, alphabetical tie-breaks, draws, missing scores, cancelled matches, non-group matches, and unknown/cross-tournament team references.
 
 #### ENG-02: Improve round-robin fixture generation
 ✅ **Done.** Generates balanced rounds for 4, 6, and 8 teams. Every pair plays exactly once. Unit tests cover all three sizes.
@@ -107,16 +91,7 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ### Admin Experience
 
 #### ADM-01: Finish access-code session handling
-
-- Owner: Admin/security
-- Depends on: F-03
-- Status: Partially done. Access code checked via `x-hpfc-admin: 1` header stored in `localStorage`. Needs proper expiry and page-level redirect guard.
-- Work:
-  - Persist successful session locally with reasonable expiry.
-  - Protect all admin pages with redirect to `/admin` if no valid session.
-- Acceptance:
-  - Admin pages redirect to `/admin` without a valid session.
-  - Public routes remain open.
+✅ **Done.** Successful admin logins now create a 12-hour local session, migrate/clear the previous legacy flag, and all admin screens use `AdminGuard` to redirect expired or missing sessions back to `/admin`. Public routes remain open.
 
 #### ADM-02: Build tournament creation flow
 ✅ **Done.** `app/admin/tournaments/page.tsx` + `CreateTournamentForm` + `POST /api/admin/tournaments`. Saves tournament and teams to Supabase.
@@ -171,72 +146,24 @@ See `docs/agents.md` for agent workflow standards and current state. See `CLAUDE
 ### Public Spectator Experience
 
 #### PUB-01: Build public tournament list
-
-- Owner: Public/frontend
-- Depends on: F-03
-- Work:
-  - Wire `app/page.tsx` to real Supabase data (currently mock).
-  - Make cards readable outdoors with large tap targets.
-  - Include status and next match summary where available.
-- Acceptance:
-  - Parents can reach any live tournament in one tap from `/`.
+✅ **Done.** `/` reads live tournaments, teams, and matches from Supabase, showing status, team count, leader, and next match summary with the HPFC card UI.
 
 #### PUB-02: Build live tournament centre
-
-- Owner: Public/frontend/backend
-- Depends on: PUB-01, ADM-04
-- Work:
-  - Wire `app/tournament/[id]/page.tsx` to real Supabase data (currently mock).
-  - Show status, standings, fixtures, recent results, upcoming matches, and bracket.
-  - Subscribe to Supabase realtime or poll lightly as fallback.
-- Acceptance:
-  - Entering a result in admin updates the public page in near real time.
-  - Page remains useful if realtime temporarily drops.
+✅ **Done.** `/tournament/[id]` is server-rendered from Supabase data, calculates live standings from saved matches, shows fixtures/recent results/bracket data, and polls `/api/tournament/[id]` every 15 seconds as the lightweight realtime fallback.
 
 #### PUB-03: Add QR code and share links
-
-- Owner: Public/frontend
-- Depends on: PUB-02
-- Work:
-  - Generate QR code for each public tournament page.
-  - Add copy/share URL action.
-  - Make QR visible from admin and public pages.
-- Acceptance:
-  - Organisers can show or print a QR code on the day.
-  - Public URLs require no login.
+✅ **Done.** Added `/tournament/[id]/share` with generated QR code, copy action, and native share action. The tournament header links to the QR/share page and public URLs require no login.
 
 #### PUB-04: Add complete-state winner treatment
-
-- Owner: Public/frontend
-- Depends on: ENG-04
-- Work:
-  - Display the tournament winner prominently after completion.
-  - Keep the final table and bracket visible.
-- Acceptance:
-  - Completed tournaments still serve as a clear record of results.
+✅ **Done.** Completed tournaments display the stored/inferred final winner above the live table while keeping final table, fixtures, and bracket visible.
 
 ### Offline And Weak-Signal Resilience
 
 #### OFF-01: Add optimistic score saves
-
-- Owner: Resilience/frontend
-- Depends on: ADM-04
-- Work:
-  - Update UI immediately after score entry.
-  - Show pending, saved, and failed states.
-- Acceptance:
-  - Admin does not lose typed scores during a poor connection.
+✅ **Done.** Score saves update the admin UI immediately, distinguish saved/queued states, and preserve entered scores when the network call fails.
 
 #### OFF-02: Add local retry queue
-
-- Owner: Resilience/frontend/backend
-- Depends on: OFF-01
-- Work:
-  - Store pending score updates locally.
-  - Retry when connectivity returns or page reloads.
-  - Avoid duplicate writes.
-- Acceptance:
-  - Turning the network off and back on does not lose a saved result.
+✅ **Done.** Failed score saves are stored in a local retry queue, deduped by match, retried on page load and browser `online`, and can be manually retried from the score panel.
 
 #### OFF-03: Add lightweight cache strategy
 

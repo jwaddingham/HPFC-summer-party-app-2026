@@ -1,25 +1,21 @@
 'use client';
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Plus, LogOut } from 'lucide-react';
+import { AdminGuard } from '@/components/admin/AdminGuard';
+import { clearAdminSession } from '@/lib/admin-session';
 
 export default function AdminDashboard() {
   const router = useRouter();
 
-  useEffect(() => {
-    if (localStorage.getItem('hpfc_admin') !== '1') {
-      router.replace('/admin');
-    }
-  }, [router]);
-
   function logout() {
-    localStorage.removeItem('hpfc_admin');
+    clearAdminSession();
     router.push('/admin');
   }
 
   return (
-    <div className="min-h-screen bg-chalk">
+    <AdminGuard>
+      <div className="min-h-screen bg-chalk">
       {/* Header */}
       <div className="bg-ink text-white pt-12 pb-8 px-4">
         <div className="flex justify-between items-center mb-1">
@@ -61,6 +57,7 @@ export default function AdminDashboard() {
           </Link>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminGuard>
   );
 }

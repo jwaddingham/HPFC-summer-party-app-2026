@@ -2,15 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAdminHeaders } from '@/lib/admin-session';
 
 const TEAM_COUNTS = [4, 6, 8] as const;
-
-function getAdminHeaders() {
-  return {
-    'content-type': 'application/json',
-    'x-hpfc-admin': localStorage.getItem('hpfc_admin') === '1' ? '1' : '0',
-  };
-}
 
 export function CreateTournamentForm() {
   const router = useRouter();
@@ -45,7 +39,7 @@ export function CreateTournamentForm() {
 
     const response = await fetch('/api/admin/tournaments', {
       method: 'POST',
-      headers: getAdminHeaders(),
+      headers: getAdminHeaders({ json: true }),
       body: JSON.stringify({ name, teamCount, teamNames: teams }),
     });
 

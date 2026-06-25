@@ -1,6 +1,10 @@
 node_modules/
 .next/
 out/
+.DS_Store
+HPFC-summer-party-app-2026/
+Magic Patterns design/
+supabase/.temp/
 
 .env
 .env*.local

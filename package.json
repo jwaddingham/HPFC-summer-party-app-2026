@@ -10,13 +10,14 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "vitest run",
     "db:migrate": "supabase db push",
+    "db:reset:local": "supabase db reset",
     "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.469.0",
-    "next": "15.3.8",
+    "next": "15.5.19",
     "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"

@@ -75,6 +75,7 @@ describe('buildTable', () => {
 
     const rows = buildTable(teams, [
       match({ id: 'm1', status: 'scheduled', home_score: 8, away_score: 0 }),
+      match({ id: 'm1b', status: 'cancelled', home_score: 8, away_score: 0 }),
       match({ id: 'm2', stage: 'semi_final', home_score: 4, away_score: 0 }),
       match({ id: 'm3', home_score: null, away_score: null }),
       match({ id: 'm4', home_team_id: 'other-tournament-team', away_team_id: 'reds', home_score: 5, away_score: 0 }),
@@ -85,6 +86,17 @@ describe('buildTable', () => {
     expect(byId.reds).toMatchObject({ played: 0, gf: 0, ga: 0, gd: 0, points: 0 });
     expect(byId.blues).toMatchObject({ played: 0, gf: 0, ga: 0, gd: 0, points: 0 });
   });
+
+  it('awards one point each for draws without adding wins or losses', () => {
+    const rows = buildTable([team('reds', 'Reds'), team('blues', 'Blues')], [
+      match({ id: 'm1', home_team_id: 'reds', away_team_id: 'blues', home_score: 2, away_score: 2 }),
+    ]);
+
+    expect(rows).toEqual([
+      { teamId: 'blues', team: 'Blues', played: 1, won: 0, drawn: 1, lost: 0, gf: 2, ga: 2, gd: 0, points: 1 },
+      { teamId: 'reds', team: 'Reds', played: 1, won: 0, drawn: 1, lost: 0, gf: 2, ga: 2, gd: 0, points: 1 },
+    ]);
+  });
 });
 
 describe('generateRoundRobin', () => {
@@ -93,7 +105,7 @@ describe('generateRoundRobin', () => {
     const pairings = new Set(fixtures.map((fixture) => [fixture.home, fixture.away].sort().join(':')));
 
     expect(fixtures).toHaveLength(6);
-    expect(pairings.size).toBe(6);
+    expect(pairings).toEqual(new Set(['t1:t2', 't1:t3', 't1:t4', 't2:t3', 't2:t4', 't3:t4']));
   });
 
   it('groups 4-team fixtures into rounds without repeating a team within a round', () => {
@@ -124,6 +136,24 @@ describe('generateRoundRobin', () => {
 
       expect(teamsInRound).toHaveLength(6);
       expect(new Set(teamsInRound).size).toBe(6);
+    }
+  });
+
+  it('generates 28 fixtures across 7 balanced rounds for 8 teams', () => {
+    const fixtures = generateRoundRobin(['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8']);
+    const pairings = new Set(fixtures.map((fixture) => [fixture.home, fixture.away].sort().join(':')));
+
+    expect(fixtures).toHaveLength(28);
+    expect(pairings.size).toBe(28);
+    expect([...new Set(fixtures.map((fixture) => fixture.round))]).toEqual([1, 2, 3, 4, 5, 6, 7]);
+
+    for (const round of [1, 2, 3, 4, 5, 6, 7]) {
+      const teamsInRound = fixtures
+        .filter((fixture) => fixture.round === round)
+        .flatMap((fixture) => [fixture.home, fixture.away]);
+
+      expect(teamsInRound).toHaveLength(8);
+      expect(new Set(teamsInRound).size).toBe(8);
     }
   });
 

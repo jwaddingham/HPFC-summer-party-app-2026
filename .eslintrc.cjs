@@ -27,6 +27,8 @@ module.exports = {
     'out/',
     'build/',
     'next-env.d.ts',
+    'HPFC-summer-party-app-2026/',
+    'Magic Patterns design/',
     'docs/Magic Patterns design/',
     'scripts/generate-icons.js',
   ],

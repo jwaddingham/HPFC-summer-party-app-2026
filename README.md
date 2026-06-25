@@ -20,7 +20,7 @@
 2. ✅ Team setup and fixtures engine utilities
 3. ✅ Score entry UI + live table calculation
 4. ✅ Admin access code route
-5. ⏳ Next: knockout generation + bracket progression + QR links + offline queue
+5. ⏳ Next: knockout generation controls + bracket progression + route/API smoke tests
 
 See `docs/build-tasks.md` for a handoff-ready backlog with owners, dependencies, and acceptance criteria.
 
@@ -31,6 +31,11 @@ cp .env.example .env.local
 # edit .env.local with your Supabase project values and admin code
 npm run dev
 npm run test
+```
+
+To reset a local Supabase database and load deterministic 4, 6, and 8 team demo tournaments:
+```bash
+npm run db:reset:local
 ```
 
 ### Environment variables
@@ -90,6 +95,7 @@ npm run start
 ```
 
 `dev:migrate` is kept as an explicit alias.
+`db:reset:local` runs Supabase's local reset flow, applying migrations and `supabase/seed.sql`.
 
 ## CI migration workflow
 - PRs to `main` run a blocking dry-run check: `supabase-dry-run`.

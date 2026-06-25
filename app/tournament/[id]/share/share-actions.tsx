@@ -1,0 +1,44 @@
+'use client';
+
+import { useState } from 'react';
+import { Check, Copy, Share2 } from 'lucide-react';
+
+export function ShareActions({ url, title }: { url: string; title: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyUrl() {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function shareUrl() {
+    if (navigator.share) {
+      await navigator.share({ title, url });
+      return;
+    }
+
+    await copyUrl();
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <button
+        type="button"
+        onClick={copyUrl}
+        className="inline-flex items-center justify-center gap-2 border-2 border-ink bg-white px-3 py-3 text-sm font-bold uppercase tracking-wider text-ink shadow-hard active:translate-x-1 active:translate-y-1 active:shadow-none"
+      >
+        {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+      <button
+        type="button"
+        onClick={shareUrl}
+        className="inline-flex items-center justify-center gap-2 border-2 border-blood bg-blood px-3 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-hard-blood active:translate-x-1 active:translate-y-1 active:shadow-none"
+      >
+        <Share2 className="h-4 w-4" aria-hidden="true" />
+        Share
+      </button>
+    </div>
+  );
+}

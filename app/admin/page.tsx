@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
+import { createAdminSession, hasValidAdminSession } from '@/lib/admin-session';
 
 export default function AdminLogin() {
   const [code, setCode] = useState('');
@@ -10,7 +11,7 @@ export default function AdminLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    if (localStorage.getItem('hpfc_admin') === '1') {
+    if (hasValidAdminSession()) {
       router.replace('/admin/dashboard');
     }
   }, [router]);
@@ -28,7 +29,7 @@ export default function AdminLogin() {
         body: JSON.stringify({ code })
       });
       if (res.ok) {
-        localStorage.setItem('hpfc_admin', '1');
+        createAdminSession();
         router.push('/admin/dashboard');
       } else {
         setErr('Invalid code');
@@ -38,7 +39,7 @@ export default function AdminLogin() {
     }
   }
 
-  function handleKeyPress(e: React.KeyboardEvent) {
+  function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter') {
       submit();
     }
@@ -81,7 +82,7 @@ export default function AdminLogin() {
                 setCode(e.target.value);
                 if (err) setErr('');
               }}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               className="w-full border-2 border-ink p-3 font-mono text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
               disabled={isLoading}
             />

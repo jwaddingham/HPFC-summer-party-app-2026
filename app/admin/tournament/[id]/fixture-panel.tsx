@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarPlus, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { getAdminHeaders } from '@/lib/admin-session';
 
 type TeamRow = { id: string; name: string };
 type MatchRow = {
@@ -16,10 +17,64 @@ type MatchRow = {
   away_score: number | null;
   status: string;
 };
+type PendingScore = {
+  tournamentId: string;
+  matchId: string;
+  home_score: number;
+  away_score: number;
+  updatedAt: number;
+};
 
-function getAdminHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  return localStorage.getItem('hpfc_admin') === '1' ? { 'x-hpfc-admin': '1' } : {};
+const SCORE_QUEUE_KEY = 'hpfc_pending_score_queue';
+
+function readPendingScores(): PendingScore[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = window.localStorage.getItem(SCORE_QUEUE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    window.localStorage.removeItem(SCORE_QUEUE_KEY);
+    return [];
+  }
+}
+
+function writePendingScores(scores: PendingScore[]) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(SCORE_QUEUE_KEY, JSON.stringify(scores));
+}
+
+function getPendingScoresForTournament(tournamentId: string) {
+  return readPendingScores().filter((score) => score.tournamentId === tournamentId);
+}
+
+function upsertPendingScore(score: PendingScore) {
+  const scores = readPendingScores().filter(
+    (pending) => pending.tournamentId !== score.tournamentId || pending.matchId !== score.matchId,
+  );
+  writePendingScores([...scores, score]);
+}
+
+function removePendingScore(tournamentId: string, matchId: string) {
+  writePendingScores(
+    readPendingScores().filter((score) => score.tournamentId !== tournamentId || score.matchId !== matchId),
+  );
+}
+
+function applyPendingScores(matches: MatchRow[], tournamentId: string) {
+  const pendingByMatch = new Map(getPendingScoresForTournament(tournamentId).map((score) => [score.matchId, score]));
+  return matches.map((match) => {
+    const pending = pendingByMatch.get(match.id);
+    if (!pending) return match;
+    return {
+      ...match,
+      home_score: pending.home_score,
+      away_score: pending.away_score,
+      status: 'complete',
+    };
+  });
 }
 
 function ScoreEntry({
@@ -27,13 +82,17 @@ function ScoreEntry({
   homeTeam,
   awayTeam,
   tournamentId,
+  isPending,
   onSaved,
+  onPendingChange,
 }: {
   match: MatchRow;
   homeTeam: string;
   awayTeam: string;
   tournamentId: string;
+  isPending: boolean;
   onSaved: (updated: MatchRow) => void;
+  onPendingChange: () => void;
 }) {
   const [homeScore, setHomeScore] = useState(match.home_score ?? 0);
   const [awayScore, setAwayScore] = useState(match.away_score ?? 0);
@@ -46,11 +105,27 @@ function ScoreEntry({
     setSaved(false);
     setError('');
 
+    const optimistic = {
+      ...match,
+      home_score: homeScore,
+      away_score: awayScore,
+      status: 'complete',
+    };
+    onSaved(optimistic);
+    upsertPendingScore({
+      tournamentId,
+      matchId: match.id,
+      home_score: homeScore,
+      away_score: awayScore,
+      updatedAt: Date.now(),
+    });
+    onPendingChange();
+
     const response = await fetch(
       `/api/admin/tournament/${tournamentId}/matches/${match.id}`,
       {
         method: 'PATCH',
-        headers: { 'content-type': 'application/json', ...getAdminHeaders() },
+        headers: getAdminHeaders({ json: true }),
         body: JSON.stringify({ home_score: homeScore, away_score: awayScore }),
       }
     );
@@ -59,10 +134,12 @@ function ScoreEntry({
     setSaving(false);
 
     if (!response.ok) {
-      setError(payload.error ?? 'Could not save score.');
+      setError(payload.error ?? 'Saved locally. Will retry when connection returns.');
       return;
     }
 
+    removePendingScore(tournamentId, match.id);
+    onPendingChange();
     setSaved(true);
     onSaved(payload);
     setTimeout(() => setSaved(false), 2000);
@@ -93,6 +170,11 @@ function ScoreEntry({
       {isCorrectingComplete ? (
         <p className="text-xs font-semibold text-blood uppercase tracking-wide pr-10" role="status">
           Updating recorded result
+        </p>
+      ) : null}
+      {isPending ? (
+        <p className="text-xs font-semibold text-gold uppercase tracking-wide pr-10" role="status">
+          Queued for retry
         </p>
       ) : null}
       <div className="grid grid-cols-2 gap-2">
@@ -184,12 +266,55 @@ export function FixturePanel({
   initialMatches: MatchRow[];
 }) {
   const router = useRouter();
-  const [matches, setMatches] = useState(initialMatches);
+  const [matches, setMatches] = useState(() => applyPendingScores(initialMatches, tournamentId));
+  const [pendingScores, setPendingScores] = useState<PendingScore[]>([]);
   const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
   const canGenerate = [4, 6, 8].includes(teams.length);
   const teamNames = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
+  const pendingMatchIds = useMemo(() => new Set(pendingScores.map((score) => score.matchId)), [pendingScores]);
+
+  const refreshPendingScores = useCallback(() => {
+    setPendingScores(getPendingScoresForTournament(tournamentId));
+  }, [tournamentId]);
+
+  const retryPendingScores = useCallback(async () => {
+    const queued = getPendingScoresForTournament(tournamentId);
+    if (queued.length === 0) return;
+
+    for (const pending of queued) {
+      const response = await fetch(
+        `/api/admin/tournament/${tournamentId}/matches/${pending.matchId}`,
+        {
+          method: 'PATCH',
+          headers: getAdminHeaders({ json: true }),
+          body: JSON.stringify({ home_score: pending.home_score, away_score: pending.away_score }),
+        },
+      );
+
+      if (!response.ok) continue;
+
+      const updated = await response.json().catch(() => null);
+      removePendingScore(tournamentId, pending.matchId);
+      if (updated) {
+        setMatches((prev) => prev.map((match) => (match.id === updated.id ? updated : match)));
+      }
+    }
+
+    refreshPendingScores();
+  }, [refreshPendingScores, tournamentId]);
+
+  useEffect(() => {
+    setMatches(applyPendingScores(initialMatches, tournamentId));
+    refreshPendingScores();
+  }, [initialMatches, refreshPendingScores, tournamentId]);
+
+  useEffect(() => {
+    retryPendingScores();
+    window.addEventListener('online', retryPendingScores);
+    return () => window.removeEventListener('online', retryPendingScores);
+  }, [retryPendingScores]);
 
   const rounds = useMemo(() => {
     const grouped = new Map<number, MatchRow[]>();
@@ -236,6 +361,7 @@ export function FixturePanel({
     router.refresh();
   }
 
+  const pendingCount = pendingScores.length;
   const scheduledCount = matches.filter((m) => m.status === 'scheduled').length;
   const completedCount = matches.filter((m) => m.status === 'complete').length;
 
@@ -258,6 +384,15 @@ export function FixturePanel({
       </div>
 
       {error ? <p className="border-2 border-blood bg-red-50 px-3 py-2 text-sm font-semibold text-blood" role="alert">{error}</p> : null}
+
+      {pendingCount > 0 ? (
+        <div className="flex items-center justify-between gap-3 border-2 border-gold bg-gold/10 px-3 py-2 text-sm font-semibold text-ink">
+          <span>{pendingCount} result{pendingCount === 1 ? '' : 's'} queued for retry</span>
+          <button type="button" className="text-blood underline" onClick={retryPendingScores}>
+            Retry
+          </button>
+        </div>
+      ) : null}
 
       {matches.length === 0 ? (
         <div className="space-y-3">
@@ -293,7 +428,9 @@ export function FixturePanel({
                     homeTeam={teamNames.get(match.home_team_id) ?? 'Unknown'}
                     awayTeam={teamNames.get(match.away_team_id) ?? 'Unknown'}
                     tournamentId={tournamentId}
+                    isPending={pendingMatchIds.has(match.id)}
                     onSaved={handleSaved}
+                    onPendingChange={refreshPendingScores}
                   />
                 ))}
               </div>
