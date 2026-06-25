@@ -1,14 +1,25 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
+import { AdminGuard } from '@/components/admin/AdminGuard';
 import { getSupabasePublicClient } from '@/lib/supabase/server';
-import { ManageTeams } from './manage-teams';
 import { FixturePanel } from './fixture-panel';
+import { ManageTeams } from './manage-teams';
+
+export const dynamic = 'force-dynamic';
 
 export default async function AdminTournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return <div className="space-y-4"><h1 className="text-2xl font-bold">Tournament control</h1><p className="card">Supabase environment variables are missing.</p></div>;
+    return (
+      <AdminGuard>
+        <div className="min-h-screen bg-chalk p-4">
+          <div className="bg-white border-2 border-ink p-4 text-sm text-gray-700">
+            Supabase environment variables are missing.
+          </div>
+        </div>
+      </AdminGuard>
+    );
   }
   const supabase = getSupabasePublicClient();
 
@@ -27,7 +38,8 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
   const locked = (matches ?? []).length > 0;
 
   return (
-    <div className="min-h-screen bg-chalk">
+    <AdminGuard>
+      <div className="min-h-screen bg-chalk">
       {/* Header */}
       <div className="bg-ink text-white pt-12 pb-8 px-4">
         <Link href="/admin/tournaments" className="flex items-center text-gray-400 hover:text-white mb-3 transition-colors">
@@ -75,6 +87,7 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
           </ul>
         </div>
       </div>
-    </div>
+      </div>
+    </AdminGuard>
   );
 }

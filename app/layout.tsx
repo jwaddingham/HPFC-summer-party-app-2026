@@ -1,7 +1,7 @@
 import './globals.css';
 import Script from 'next/script';
 import { ReactNode } from 'react';
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 import { PWARegistration } from '@/components/PWARegistration';
 
 export const metadata: Metadata = {
@@ -20,14 +20,15 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false
-  },
-  themeColor: '#b71c1c',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true
   }
+};
+
+export const viewport: Viewport = {
+  themeColor: '#b71c1c',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

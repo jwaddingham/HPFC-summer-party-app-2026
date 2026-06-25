@@ -20,7 +20,7 @@
 2. ✅ Team setup and fixtures engine utilities
 3. ✅ Score entry UI + live table calculation
 4. ✅ Admin access code route
-5. ⏳ Next: knockout generation + bracket progression + QR links + offline queue
+5. ⏳ Next: knockout generation controls + bracket progression + route/API smoke tests
 
 See `docs/build-tasks.md` for a handoff-ready backlog with owners, dependencies, and acceptance criteria.
 
@@ -33,6 +33,11 @@ npm run dev
 npm run test
 ```
 
+To reset a local Supabase database and load deterministic 4, 6, and 8 team demo tournaments:
+```bash
+npm run db:reset:local
+```
+
 ### Environment variables
 
 The app reads environment variables from `.env.local` in development and from the deployment provider in hosted environments. Use `.env.example` as the template and never commit real secrets.
@@ -43,7 +48,7 @@ The app reads environment variables from `.env.local` in development and from th
 | `NEXT_PUBLIC_SUPABASE_URL` | Local, Vercel client/server runtime | Public Supabase project URL used by browser and server Supabase clients. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Local, Vercel client/server runtime | Public anon key used for read-only public data access. RLS policies protect writes from anonymous users. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Local, Vercel server runtime | Server-only key used by admin API routes for trusted writes. Never prefix with `NEXT_PUBLIC_`. |
-| `SUPABASE_DB_URL` | Local CLI/CI | Postgres connection string used by Supabase CLI migration commands. For local Supabase, use the value from `supabase start`. |
+| `SUPABASE_DB_URL` | CI/explicit remote migration commands | Postgres connection string used when pushing migrations to an explicit database with `--db-url`. |
 | `SUPABASE_DB_PASSWORD` | CI/Vercel project setup | Database password used by GitHub Actions/Supabase CLI workflows that push migrations. |
 
 ### Local Supabase setup
@@ -52,7 +57,7 @@ The app reads environment variables from `.env.local` in development and from th
 2. Start a local Supabase stack or create a hosted Supabase project.
 3. Copy `.env.example` to `.env.local`.
 4. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` from your Supabase project settings. For local Supabase, use the values printed by `supabase start`.
-5. Run `npm run db:migrate` to apply the schema, or run `npm run dev` which runs migrations before starting Next.js.
+5. Run `npm run db:migrate:local` to apply the schema to the local Supabase stack, or run `npm run dev` which runs local migrations before starting Next.js.
 
 ### Vercel environment setup
 
@@ -78,22 +83,27 @@ npm run audit:prod
 CI should fail on high or critical vulnerabilities in production dependencies. Development-only audit findings should be reviewed before release, but they do not block day-of-event preview builds unless they affect runtime code, secrets, or deployment tooling.
 
 ## Database migrations
-Apply SQL migrations with Supabase CLI:
+Apply SQL migrations to the local Supabase stack with:
 ```bash
-npm run db:migrate
+npm run db:migrate:local
 ```
 
-Migrations currently auto-run on app start for this project:
+Local migrations auto-run before the development server:
 ```bash
 npm run dev
-npm run start
 ```
 
-`dev:migrate` is kept as an explicit alias.
+`db:migrate` is a local-safe alias for `db:migrate:local`, and `dev:migrate` is kept as an explicit alias.
+`db:reset:local` runs Supabase's local reset flow, applying migrations from `supabase/migrations` and then `supabase/seed.sql`.
+
+To push migrations to a hosted database outside the GitHub workflow, set `SUPABASE_DB_URL` and `SUPABASE_DB_PASSWORD`, then run:
+```bash
+npm run db:migrate:remote
+```
 
 ## CI migration workflow
 - PRs to `main` run a blocking dry-run check: `supabase-dry-run`.
-- Pushes to `main` run `supabase db push` before deployment workflows.
+- Pushes to `main` run `supabase db push --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD"` before deployment workflows.
 
 Required GitHub repository secrets:
 - `SUPABASE_DB_URL`

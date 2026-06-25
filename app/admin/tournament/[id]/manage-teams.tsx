@@ -1,18 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { getAdminHeaders } from '@/lib/admin-session';
 
-interface TeamRow {
-  id: string;
-  name: string;
-}
-
-function getAdminHeaders() {
-  return {
-    'content-type': 'application/json',
-    'x-hpfc-admin': localStorage.getItem('hpfc_admin') === '1' ? '1' : '0',
-  };
-}
+interface TeamRow { id: string; name: string; }
 
 export function ManageTeams({ tournamentId, initialTeams, locked }: { tournamentId: string; initialTeams: TeamRow[]; locked: boolean }) {
   const [teams, setTeams] = useState<TeamRow[]>(initialTeams);
@@ -33,7 +24,7 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
     setError('');
     const response = await fetch(`/api/admin/tournament/${tournamentId}/teams`, {
       method: 'PATCH',
-      headers: getAdminHeaders(),
+      headers: getAdminHeaders({ json: true }),
       body: JSON.stringify({ teams }),
     });
     const body = (await response.json().catch(() => ({}))) as { error?: string };
@@ -46,7 +37,7 @@ export function ManageTeams({ tournamentId, initialTeams, locked }: { tournament
     setError('');
     const response = await fetch(`/api/admin/tournament/${tournamentId}/teams`, {
       method: 'POST',
-      headers: getAdminHeaders(),
+      headers: getAdminHeaders({ json: true }),
       body: JSON.stringify({ name: newTeamName }),
     });
     const body = (await response.json().catch(() => ({}))) as { error?: string };

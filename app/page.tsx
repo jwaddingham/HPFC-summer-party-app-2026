@@ -1,30 +1,15 @@
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { ArrowRight, Clock, Settings, Trophy, Users } from 'lucide-react';
 import { HPFCBadge } from '@/components/ui/HPFCBadge';
 import { StatusPill } from '@/components/ui/StatusPill';
+import { getTournamentSummaries } from '@/lib/public-tournaments';
+import { hasSupabasePublicEnv } from '@/lib/supabase/server';
 
-const demo = [
-  {
-    id: 'demo',
-    name: 'U11 Summer Cup',
-    status: 'live' as const,
-    stage: 'Group Stage',
-    teamCount: 8,
-    leader: 'Hinksey Hawks',
-    nextMatch: '11:40 AM'
-  },
-  {
-    id: 'demo2',
-    name: 'U9 Development Cup',
-    status: 'upcoming' as const,
-    stage: 'Setup',
-    teamCount: 6,
-    leader: null,
-    nextMatch: null
-  }
-];
+export const dynamic = 'force-dynamic';
 
-export default function Home() {
+export default async function Home() {
+  const tournaments = hasSupabasePublicEnv() ? await getTournamentSummaries() : [];
+
   return (
     <div className="min-h-full pb-8">
       {/* Header */}
@@ -64,7 +49,19 @@ export default function Home() {
           <span className="font-hand text-blood text-xl transform -rotate-2">Today!</span>
         </div>
 
-        {demo.map((t) => (
+        {!hasSupabasePublicEnv() ? (
+          <div className="border-2 border-ink bg-white p-4 text-sm text-gray-700 shadow-hard">
+            Add Supabase environment variables to show live tournaments.
+          </div>
+        ) : null}
+
+        {hasSupabasePublicEnv() && tournaments.length === 0 ? (
+          <div className="border-2 border-ink bg-white p-4 text-sm text-gray-700 shadow-hard">
+            No tournaments have been created yet.
+          </div>
+        ) : null}
+
+        {tournaments.map((t) => (
           <Link
             key={t.id}
             href={`/tournament/${t.id}`}
@@ -72,33 +69,33 @@ export default function Home() {
           >
             <div className="flex justify-between items-start mb-3">
               <h3 className="font-display text-2xl leading-none w-2/3">{t.name}</h3>
-              <StatusPill status={t.status === 'upcoming' ? 'upcoming' : 'live'} />
+              <StatusPill status={t.status} />
             </div>
 
             <div className="space-y-2 mb-4 text-sm text-gray-600">
               <div className="flex items-center">
-                <span className="mr-2">👥</span>
+                <Users className="mr-2 h-4 w-4 text-ink" aria-hidden="true" />
                 {t.teamCount} Teams
               </div>
 
               {t.leader && (
                 <div className="flex items-center">
-                  <span className="mr-2">🏆</span>
+                  <Trophy className="mr-2 h-4 w-4 text-gold" aria-hidden="true" />
                   Leader: <span className="font-bold text-ink ml-1">{t.leader}</span>
                 </div>
               )}
 
               {t.nextMatch && (
                 <div className="flex items-center">
-                  <span className="mr-2">⏰</span>
-                  Next Match: <span className="font-bold text-ink ml-1">{t.nextMatch}</span>
+                  <Clock className="mr-2 h-4 w-4 text-blood" aria-hidden="true" />
+                  Next: <span className="font-bold text-ink ml-1">{t.nextMatch}</span>
                 </div>
               )}
             </div>
 
             <div className="pt-3 border-t-2 border-dashed border-gray-200 flex items-center justify-between text-blood font-bold text-sm uppercase tracking-wider">
               <span>View Tournament</span>
-              <span>→</span>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </div>
           </Link>
         ))}
