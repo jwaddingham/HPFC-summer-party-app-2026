@@ -63,3 +63,18 @@ create policy "public read matches"
   on matches for select
   to anon, authenticated
   using (true);
+
+-- Runtime config (e.g. the admin access code), changeable without a redeploy.
+-- RLS on with no policies: only the service role and the Supabase dashboard can
+-- read or write it, so the public anon key can never see the code.
+create table if not exists app_config (
+  key text primary key,
+  value text not null default '',
+  updated_at timestamptz not null default now()
+);
+
+alter table app_config enable row level security;
+
+insert into app_config (key, value)
+  values ('admin_access_code', '')
+  on conflict (key) do nothing;
