@@ -29,7 +29,7 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
   const supabase = getSupabasePublicClient();
 
   const [{ data: tournament }, { data: teams }, { data: matches }] = await Promise.all([
-    supabase.from('tournaments').select('id, name, status, knockout_mode').eq('id', id).single(),
+    supabase.from('tournaments').select('id, name, status, knockout_mode, third_place_playoff').eq('id', id).single(),
     supabase.from('teams').select('id, tournament_id, name').eq('tournament_id', id).order('name', { ascending: true }),
     supabase
       .from('matches')
@@ -86,6 +86,7 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
           tournamentId={id}
           status={tournament.status}
           knockoutMode={tournament.knockout_mode}
+          thirdPlacePlayoff={Boolean(tournament.third_place_playoff)}
           teamCount={teamList.length}
           groupComplete={groupComplete}
           seedOrder={seedOrder}

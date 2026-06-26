@@ -3,10 +3,11 @@ import type { KnockoutMatchRow } from '@/lib/public-tournaments';
 const STAGE_LABELS: Record<KnockoutMatchRow['stage'], string> = {
   quarter_final: 'Quarter-finals',
   semi_final: 'Semi-finals',
+  third_place: '3rd/4th playoff',
   final: 'Final',
 };
 
-const STAGE_ORDER: KnockoutMatchRow['stage'][] = ['quarter_final', 'semi_final', 'final'];
+const STAGE_ORDER: KnockoutMatchRow['stage'][] = ['quarter_final', 'semi_final', 'third_place', 'final'];
 
 export function Bracket({ matches = [], qualifyingCount = 4 }: { matches?: KnockoutMatchRow[]; qualifyingCount?: number }) {
   if (matches.length === 0) {
@@ -29,11 +30,17 @@ export function Bracket({ matches = [], qualifyingCount = 4 }: { matches?: Knock
         return (
           <section key={stage} className="space-y-2">
             <h3 className="font-display text-xl tracking-wide text-ink">{STAGE_LABELS[stage]}</h3>
-            <div className={stage === 'final' ? 'space-y-2' : 'grid gap-3 sm:grid-cols-2'}>
+            <div className={stage === 'final' || stage === 'third_place' ? 'space-y-2' : 'grid gap-3 sm:grid-cols-2'}>
               {stageMatches.map((match) => (
                 <div
                   key={match.id}
-                  className={`border-2 bg-white p-4 ${stage === 'final' ? 'border-blood shadow-hard-blood' : 'border-ink shadow-hard-sm'}`}
+                  className={`border-2 bg-white p-4 ${
+                    stage === 'final'
+                      ? 'border-blood shadow-hard-blood'
+                      : stage === 'third_place'
+                        ? 'border-gold shadow-hard-sm'
+                        : 'border-ink shadow-hard-sm'
+                  }`}
                 >
                   <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-600">{match.label}</p>
                   <div className="space-y-2">

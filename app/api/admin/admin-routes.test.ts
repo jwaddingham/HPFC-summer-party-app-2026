@@ -312,7 +312,7 @@ describe('tournament reset route', () => {
     await expect(response.json()).resolves.toEqual({ ok: true, status: 'setup', deletedMatches: 2 });
     expect(response.status).toBe(200);
     expect(deleteMatches).toHaveBeenCalled();
-    expect(updateTournament).toHaveBeenCalledWith({ status: 'setup' });
+    expect(updateTournament).toHaveBeenCalledWith({ status: 'setup', third_place_playoff: false });
   });
 });
 

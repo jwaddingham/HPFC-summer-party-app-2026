@@ -8,7 +8,7 @@ import { getAdminHeaders } from '@/lib/admin-session';
 import type { TournamentStatus } from '@/lib/types';
 
 type KnockoutMode = 'top4' | 'quarter_finals';
-type KnockoutStage = 'quarter_final' | 'semi_final' | 'final';
+type KnockoutStage = 'quarter_final' | 'semi_final' | 'third_place' | 'final';
 
 type TeamRow = { id: string; name: string };
 
@@ -27,10 +27,17 @@ export type KnockoutMatchRow = {
 const STAGE_LABELS: Record<KnockoutStage, string> = {
   quarter_final: 'Quarter-finals',
   semi_final: 'Semi-finals',
+  third_place: '3rd/4th playoff',
   final: 'Final',
 };
 
-const STAGE_ORDER: KnockoutStage[] = ['quarter_final', 'semi_final', 'final'];
+const STAGE_ORDER: KnockoutStage[] = ['quarter_final', 'semi_final', 'third_place', 'final'];
+
+function matchLabel(match: Pick<KnockoutMatchRow, 'stage' | 'round_number'>) {
+  if (match.stage === 'final') return 'Final';
+  if (match.stage === 'third_place') return '3rd/4th playoff';
+  return `${STAGE_LABELS[match.stage].slice(0, -1)} ${match.round_number}`;
+}
 
 function ScoreStepper({
   label,
@@ -85,13 +92,15 @@ function KnockoutScoreEntry({
 
   const isLevel = homeScore === awayScore;
   const isFinal = match.stage === 'final';
+  const isThirdPlace = match.stage === 'third_place';
   const isComplete = match.status === 'complete';
   const advancingId = isLevel ? winnerId : homeScore > awayScore ? match.home_team_id : match.away_team_id;
   const advancingName = advancingId === match.home_team_id ? homeTeam : advancingId === match.away_team_id ? awayTeam : null;
+  const resultLabel = isFinal ? 'Winners' : isThirdPlace ? 'Third place' : 'Advances';
 
   async function save() {
     if (isLevel && !winnerId) {
-      setError('Scores are level. Pick which team goes through.');
+      setError(isThirdPlace ? 'Scores are level. Pick who finished third.' : 'Scores are level. Pick which team goes through.');
       return;
     }
 
@@ -134,12 +143,12 @@ function KnockoutScoreEntry({
     <div className={`border-2 p-3 space-y-3 ${isComplete ? 'border-pitch bg-white' : 'border-ink bg-white'}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
-          {isFinal ? 'Final' : `${STAGE_LABELS[match.stage].slice(0, -1)} ${match.round_number}`}
+          {matchLabel(match)}
         </span>
         {isComplete && advancingName ? (
           <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-pitch">
             <Check className="w-3.5 h-3.5" aria-hidden="true" />
-            {isFinal ? 'Winners' : 'Advances'}: {advancingName}
+            {resultLabel}: {advancingName}
           </span>
         ) : null}
       </div>
@@ -157,7 +166,7 @@ function KnockoutScoreEntry({
       {isLevel ? (
         <fieldset className="border-2 border-dashed border-ink/40 p-2 space-y-2">
           <legend className="px-1 text-xs font-bold uppercase tracking-wide text-blood">
-            Level — who advances?
+            {isThirdPlace ? 'Level — who finished third?' : 'Level — who advances?'}
           </legend>
           <div className="grid grid-cols-2 gap-2">
             {[
@@ -211,11 +220,13 @@ function KnockoutScoreEntry({
 function KnockoutDraw({
   tournamentId,
   knockoutMode,
+  thirdPlacePlayoff,
   teamCount,
   seedOrder,
 }: {
   tournamentId: string;
   knockoutMode: KnockoutMode;
+  thirdPlacePlayoff: boolean;
   teamCount: number;
   seedOrder: TeamRow[];
 }) {
@@ -224,6 +235,7 @@ function KnockoutDraw({
   const [mode, setMode] = useState<KnockoutMode>(
     knockoutMode === 'quarter_finals' && quarterAvailable ? 'quarter_finals' : 'top4',
   );
+  const [includeThirdPlace, setIncludeThirdPlace] = useState(thirdPlacePlayoff);
   const [seeds, setSeeds] = useState<TeamRow[]>(seedOrder);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -247,7 +259,7 @@ function KnockoutDraw({
       response = await fetch(`/api/admin/tournament/${tournamentId}/knockout/generate`, {
         method: 'POST',
         headers: getAdminHeaders({ json: true }),
-        body: JSON.stringify({ mode, seeds: seeds.map((seed) => seed.id) }),
+        body: JSON.stringify({ mode, seeds: seeds.map((seed) => seed.id), thirdPlacePlayoff: includeThirdPlace }),
       });
     } catch {
       setGenerating(false);
@@ -309,6 +321,25 @@ function KnockoutDraw({
           </label>
         </div>
       </div>
+
+      <label
+        className={`flex cursor-pointer items-start gap-3 border-2 p-3 ${
+          includeThirdPlace ? 'border-gold bg-gold/10' : 'border-ink/30 bg-white'
+        }`}
+      >
+        <input
+          type="checkbox"
+          className="mt-1 h-4 w-4 accent-blood"
+          checked={includeThirdPlace}
+          onChange={(event) => setIncludeThirdPlace(event.target.checked)}
+        />
+        <span className="space-y-1">
+          <span className="block font-display uppercase tracking-wide text-ink">Add 3rd/4th playoff</span>
+          <span className="block text-xs text-gray-600">
+            After the semi-finals, the two losing teams play once more for third place.
+          </span>
+        </span>
+      </label>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -488,6 +519,7 @@ export function KnockoutPanel({
   tournamentId,
   status,
   knockoutMode,
+  thirdPlacePlayoff,
   teamCount,
   groupComplete,
   seedOrder,
@@ -496,6 +528,7 @@ export function KnockoutPanel({
   tournamentId: string;
   status: TournamentStatus;
   knockoutMode: KnockoutMode;
+  thirdPlacePlayoff: boolean;
   teamCount: number;
   groupComplete: boolean;
   seedOrder: TeamRow[];
@@ -523,6 +556,7 @@ export function KnockoutPanel({
       <KnockoutDraw
         tournamentId={tournamentId}
         knockoutMode={knockoutMode}
+        thirdPlacePlayoff={thirdPlacePlayoff}
         teamCount={teamCount}
         seedOrder={seedOrder}
       />
@@ -543,7 +577,7 @@ export function KnockoutPanel({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl text-ink tracking-wide">Knockout stage</h2>
-          <p className="text-sm text-gray-600">Draw the bracket, then enter results to advance teams.</p>
+          <p className="text-sm text-gray-600">Draw the bracket, then enter results to settle the knockout places.</p>
         </div>
         {hasKnockout ? (
           <span className="shrink-0 bg-ink px-3 py-1 font-display text-sm uppercase tracking-wide text-white">

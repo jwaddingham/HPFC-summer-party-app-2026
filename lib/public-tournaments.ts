@@ -131,6 +131,7 @@ function toFixtureRow(match: Match, teamNames: Map<string, string>, liveMatchId:
 function stageLabel(stage: Exclude<MatchStage, 'group'>, round: number) {
   if (stage === 'quarter_final') return `Quarter-final ${round}`;
   if (stage === 'semi_final') return `Semi-final ${round}`;
+  if (stage === 'third_place') return '3rd/4th playoff';
   return 'Final';
 }
 
@@ -148,7 +149,8 @@ function sortMatches(matches: Match[]) {
     group: 0,
     quarter_final: 1,
     semi_final: 2,
-    final: 3,
+    third_place: 3,
+    final: 4,
   };
 
   return [...matches].sort((a, b) => stageOrder[a.stage] - stageOrder[b.stage] || a.round_number - b.round_number);
@@ -195,7 +197,7 @@ export async function getTournamentSummaries(): Promise<TournamentSummary[]> {
   const supabase = getSupabasePublicClient();
   const { data: tournaments, error: tournamentsError } = await supabase
     .from('tournaments')
-    .select('id, name, status, knockout_mode, created_at')
+    .select('id, name, status, knockout_mode, third_place_playoff, created_at')
     .order('created_at', { ascending: false });
 
   if (tournamentsError) throw new Error(tournamentsError.message);
@@ -226,7 +228,7 @@ export async function getTournamentDetail(id: string): Promise<TournamentDetail 
   const supabase = getSupabasePublicClient();
   const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: matches, error: matchesError }] =
     await Promise.all([
-      supabase.from('tournaments').select('id, name, status, knockout_mode, created_at').eq('id', id).single(),
+      supabase.from('tournaments').select('id, name, status, knockout_mode, third_place_playoff, created_at').eq('id', id).single(),
       supabase.from('teams').select('id, tournament_id, name').eq('tournament_id', id).order('name', { ascending: true }),
       supabase
         .from('matches')

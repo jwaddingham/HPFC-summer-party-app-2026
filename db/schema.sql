@@ -1,6 +1,6 @@
 create type tournament_status as enum ('setup','group_stage','knockout_stage','complete');
 create type knockout_mode as enum ('top4','quarter_finals');
-create type match_stage as enum ('group','quarter_final','semi_final','final');
+create type match_stage as enum ('group','quarter_final','semi_final','third_place','final');
 create type match_status as enum ('scheduled','complete','cancelled');
 
 create table tournaments (
@@ -8,6 +8,7 @@ create table tournaments (
   name text not null,
   status tournament_status not null default 'setup',
   knockout_mode knockout_mode not null default 'top4',
+  third_place_playoff boolean not null default false,
   created_at timestamptz not null default now()
 );
 create table teams (
