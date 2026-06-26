@@ -85,6 +85,7 @@ function ScoreEntry({
   isPending,
   onSaved,
   onPendingChange,
+  onServerSaved,
 }: {
   match: MatchRow;
   homeTeam: string;
@@ -93,6 +94,7 @@ function ScoreEntry({
   isPending: boolean;
   onSaved: (updated: MatchRow) => void;
   onPendingChange: () => void;
+  onServerSaved: () => void;
 }) {
   const [homeScore, setHomeScore] = useState(match.home_score ?? 0);
   const [awayScore, setAwayScore] = useState(match.away_score ?? 0);
@@ -155,13 +157,14 @@ function ScoreEntry({
     onPendingChange();
     setSaved(true);
     onSaved(payload);
+    onServerSaved();
     setTimeout(() => setSaved(false), 2000);
   }
 
   const isComplete = match.status === 'complete';
   const hasUnsavedChanges =
     homeScore !== (match.home_score ?? 0) || awayScore !== (match.away_score ?? 0);
-  const showEditState = isComplete && !hasUnsavedChanges && !saving && !saved;
+  const showEditState = isComplete && !isPending && !hasUnsavedChanges && !saving && !saved;
   const isCorrectingComplete =
     isComplete && hasUnsavedChanges && !saving && !saved;
 
@@ -169,7 +172,9 @@ function ScoreEntry({
     ? 'border-pitch bg-white'
     : isCorrectingComplete
       ? 'border-ink bg-white ring-2 ring-blood/25'
-      : 'border-ink bg-white';
+      : isPending
+        ? 'border-gold bg-gold/10'
+        : 'border-ink bg-white';
 
   const saveDisabled = saving || (isComplete && !hasUnsavedChanges);
 
@@ -255,6 +260,8 @@ function ScoreEntry({
           <><Check className="w-4 h-4" aria-hidden="true" /> Saved</>
         ) : isComplete && hasUnsavedChanges ? (
           'Update result'
+        ) : isPending ? (
+          'Queued for retry'
         ) : showEditState ? (
           'Result on record'
         ) : (
@@ -304,6 +311,8 @@ export function FixturePanel({
     const queued = getPendingScoresForTournament(tournamentId);
     if (queued.length === 0) return;
 
+    let syncedAny = false;
+
     for (const pending of queued) {
       let response: Response;
       try {
@@ -337,12 +346,14 @@ export function FixturePanel({
       const updated = await response.json().catch(() => null);
       removePendingScore(tournamentId, pending.matchId);
       if (updated) {
+        syncedAny = true;
         setMatches((prev) => prev.map((match) => (match.id === updated.id ? updated : match)));
       }
     }
 
     refreshPendingScores();
-  }, [formatMatchLabel, initialMatches, refreshPendingScores, tournamentId]);
+    if (syncedAny) router.refresh();
+  }, [formatMatchLabel, initialMatches, refreshPendingScores, router, tournamentId]);
 
   useEffect(() => {
     setMatches(applyPendingScores(initialMatches, tournamentId));
@@ -470,6 +481,7 @@ export function FixturePanel({
                     isPending={pendingMatchIds.has(match.id)}
                     onSaved={handleSaved}
                     onPendingChange={refreshPendingScores}
+                    onServerSaved={() => router.refresh()}
                   />
                 ))}
               </div>
