@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Loader2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -37,6 +37,10 @@ function matchLabel(match: Pick<KnockoutMatchRow, 'stage' | 'round_number'>) {
   if (match.stage === 'final') return 'Final';
   if (match.stage === 'third_place') return '3rd/4th playoff';
   return `${STAGE_LABELS[match.stage].slice(0, -1)} ${match.round_number}`;
+}
+
+function hasSameSeedOrder(a: TeamRow[], b: TeamRow[]) {
+  return a.length === b.length && a.every((seed, index) => seed.id === b[index]?.id);
 }
 
 function ScoreStepper({
@@ -237,10 +241,17 @@ function KnockoutDraw({
   );
   const [includeThirdPlace, setIncludeThirdPlace] = useState(thirdPlacePlayoff);
   const [seeds, setSeeds] = useState<TeamRow[]>(seedOrder);
+  const [hasCustomSeedOrder, setHasCustomSeedOrder] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
   const qualifyingCount = mode === 'quarter_finals' ? 8 : 4;
+
+  useEffect(() => {
+    if (!hasCustomSeedOrder) {
+      setSeeds(seedOrder);
+    }
+  }, [hasCustomSeedOrder, seedOrder]);
 
   function reorder(from: number, to: number) {
     if (to < 0 || to >= seeds.length) return;
@@ -248,6 +259,7 @@ function KnockoutDraw({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     setSeeds(next);
+    setHasCustomSeedOrder(!hasSameSeedOrder(next, seedOrder));
   }
 
   async function generate() {
