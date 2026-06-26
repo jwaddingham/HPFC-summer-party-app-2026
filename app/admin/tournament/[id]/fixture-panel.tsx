@@ -304,6 +304,9 @@ export function FixturePanel({
     const queued = getPendingScoresForTournament(tournamentId);
     if (queued.length === 0) return;
 
+    let syncedCount = 0;
+    let failedCount = 0;
+
     for (const pending of queued) {
       let response: Response;
       try {
@@ -320,6 +323,7 @@ export function FixturePanel({
       }
 
       if (!response.ok) {
+        failedCount++;
         removePendingScore(tournamentId, pending.matchId);
         const serverMatch = initialMatches.find((match) => match.id === pending.matchId);
         const matchLabel = formatMatchLabel(serverMatch);
@@ -334,11 +338,20 @@ export function FixturePanel({
         continue;
       }
 
+      syncedCount++;
       const updated = await response.json().catch(() => null);
       removePendingScore(tournamentId, pending.matchId);
       if (updated) {
         setMatches((prev) => prev.map((match) => (match.id === updated.id ? updated : match)));
       }
+    }
+
+    if (syncedCount > 0 || failedCount > 0) {
+      pendo.track('offline_queue_synced', {
+        tournament_id: tournamentId,
+        synced_count: syncedCount,
+        failed_count: failedCount,
+      });
     }
 
     refreshPendingScores();
@@ -427,7 +440,7 @@ export function FixturePanel({
       {pendingCount > 0 ? (
         <div className="flex items-center justify-between gap-3 border-2 border-gold bg-gold/10 px-3 py-2 text-sm font-semibold text-ink">
           <span>{pendingCount} result{pendingCount === 1 ? '' : 's'} queued for retry</span>
-          <button type="button" className="text-blood underline" onClick={retryPendingScores}>
+          <button type="button" data-action="retry-queued-scores" className="text-blood underline" onClick={retryPendingScores}>
             Retry
           </button>
         </div>
