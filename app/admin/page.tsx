@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock } from 'lucide-react';
+import Link from 'next/link';
+import { Home, Lock } from 'lucide-react';
 import { createAdminSession, hasValidAdminSession } from '@/lib/admin-session';
 
 export default function AdminLogin() {
@@ -49,6 +50,13 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-chalk">
       {/* Header */}
       <div className="bg-ink text-white pt-12 pb-8 px-4">
+        <Link
+          href="/"
+          className="mb-3 inline-flex min-h-9 items-center justify-center gap-1.5 border border-white/30 bg-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ink"
+        >
+          <Home className="h-4 w-4" aria-hidden="true" />
+          Public
+        </Link>
         <div className="flex justify-between items-center mb-2">
           <h1 className="font-display text-3xl tracking-wider">
             ADMIN ACCESS

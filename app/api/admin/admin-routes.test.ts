@@ -15,6 +15,7 @@ vi.mock('@/lib/knockout-server', () => ({
 }));
 
 import { POST as loginPost } from '@/app/api/admin/login/route';
+import { DELETE as deleteTournament } from '@/app/api/admin/tournament/[id]/route';
 import { PATCH as patchScore } from '@/app/api/admin/tournament/[id]/matches/[matchId]/route';
 import { POST as resetTournament } from '@/app/api/admin/tournament/[id]/reset/route';
 import { PATCH as patchTeams } from '@/app/api/admin/tournament/[id]/teams/route';
@@ -312,5 +313,67 @@ describe('tournament reset route', () => {
     expect(response.status).toBe(200);
     expect(deleteMatches).toHaveBeenCalled();
     expect(updateTournament).toHaveBeenCalledWith({ status: 'setup' });
+  });
+});
+
+describe('tournament delete route', () => {
+  it('requires confirmation before deleting a tournament', async () => {
+    const response = await deleteTournament(
+      request('DELETE', '/api/admin/tournament/tournament-1', { confirm: 'NOPE' }),
+      { params: Promise.resolve({ id: 'tournament-1' }) },
+    );
+
+    await expect(response.json()).resolves.toEqual({ error: 'Delete confirmation is required.' });
+    expect(response.status).toBe(400);
+    expect(getSupabaseAdminClientMock).not.toHaveBeenCalled();
+  });
+
+  it('deletes matches before deleting the tournament row', async () => {
+    const deleteMatches = vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(async () => ({ data: [{ id: 'm1' }, { id: 'm2' }], error: null })),
+      })),
+    }));
+    const deleteTournamentRow = vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(async () => ({ data: { id: 'tournament-1' }, error: null })),
+        })),
+      })),
+    }));
+
+    getSupabaseAdminClientMock.mockReturnValue({
+      from: vi.fn((table: string) => {
+        if (table === 'tournaments') {
+          return {
+            select: vi.fn(() =>
+              oneEqSingle({
+                data: { id: 'tournament-1', name: 'Demo tournament' },
+                error: null,
+              }),
+            ),
+            delete: deleteTournamentRow,
+          };
+        }
+        if (table === 'matches') {
+          return { delete: deleteMatches };
+        }
+        throw new Error(`Unexpected table ${table}`);
+      }),
+    });
+
+    const response = await deleteTournament(
+      request('DELETE', '/api/admin/tournament/tournament-1', { confirm: 'DELETE_TOURNAMENT' }),
+      { params: Promise.resolve({ id: 'tournament-1' }) },
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      deletedTournament: 'Demo tournament',
+      deletedMatches: 2,
+    });
+    expect(response.status).toBe(200);
+    expect(deleteMatches).toHaveBeenCalled();
+    expect(deleteTournamentRow).toHaveBeenCalled();
   });
 });
