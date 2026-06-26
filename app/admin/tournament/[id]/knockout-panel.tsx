@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, Check, Loader2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -37,10 +37,6 @@ function matchLabel(match: Pick<KnockoutMatchRow, 'stage' | 'round_number'>) {
   if (match.stage === 'final') return 'Final';
   if (match.stage === 'third_place') return '3rd/4th playoff';
   return `${STAGE_LABELS[match.stage].slice(0, -1)} ${match.round_number}`;
-}
-
-function hasSameSeedOrder(a: TeamRow[], b: TeamRow[]) {
-  return a.length === b.length && a.every((seed, index) => seed.id === b[index]?.id);
 }
 
 function formatGoalDifference(value: number) {
@@ -247,26 +243,33 @@ function KnockoutDraw({
     knockoutMode === 'quarter_finals' && quarterAvailable ? 'quarter_finals' : 'top4',
   );
   const [includeThirdPlace, setIncludeThirdPlace] = useState(thirdPlacePlayoff && semiFinalsAvailable);
-  const [seeds, setSeeds] = useState<TeamRow[]>(seedOrder);
-  const [hasCustomSeedOrder, setHasCustomSeedOrder] = useState(false);
+  // Only the organiser's custom *order* (a list of team ids) lives in state.
+  // Names and P/GD/PTS are always read from the freshest `seedOrder` prop, so a
+  // group score corrected mid-seeding updates the figures even after a reorder.
+  const [customOrderIds, setCustomOrderIds] = useState<string[] | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
   const qualifyingCount = mode === 'quarter_finals' ? 8 : Math.min(semiFinalsAvailable ? 4 : 2, teamCount);
 
-  useEffect(() => {
-    if (!hasCustomSeedOrder) {
-      setSeeds(seedOrder);
-    }
-  }, [hasCustomSeedOrder, seedOrder]);
+  const seeds = useMemo<TeamRow[]>(() => {
+    if (!customOrderIds) return seedOrder;
+    const byId = new Map(seedOrder.map((row) => [row.id, row]));
+    const ordered = customOrderIds
+      .map((id) => byId.get(id))
+      .filter((row): row is TeamRow => row !== undefined);
+    // If the roster drifted (team added/removed), fall back to the default order.
+    return ordered.length === seedOrder.length ? ordered : seedOrder;
+  }, [customOrderIds, seedOrder]);
 
   function reorder(from: number, to: number) {
     if (to < 0 || to >= seeds.length) return;
-    const next = [...seeds];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setSeeds(next);
-    setHasCustomSeedOrder(!hasSameSeedOrder(next, seedOrder));
+    const nextIds = seeds.map((seed) => seed.id);
+    const [moved] = nextIds.splice(from, 1);
+    nextIds.splice(to, 0, moved);
+    // Clear the override once it matches the default order so future refreshes flow through.
+    const matchesDefault = nextIds.every((id, index) => id === seedOrder[index]?.id);
+    setCustomOrderIds(matchesDefault ? null : nextIds);
   }
 
   async function generate() {
