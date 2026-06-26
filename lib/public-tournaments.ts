@@ -154,8 +154,8 @@ function sortMatches(matches: Match[]) {
     group: 0,
     quarter_final: 1,
     semi_final: 2,
-    third_place: 3,
-    final: 4,
+    final: 3,
+    third_place: 4,
   };
 
   return [...matches].sort((a, b) => stageOrder[a.stage] - stageOrder[b.stage] || a.round_number - b.round_number);

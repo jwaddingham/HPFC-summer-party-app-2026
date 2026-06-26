@@ -7,7 +7,7 @@ const STAGE_LABELS: Record<KnockoutMatchRow['stage'], string> = {
   final: 'Final',
 };
 
-const STAGE_ORDER: KnockoutMatchRow['stage'][] = ['quarter_final', 'semi_final', 'third_place', 'final'];
+const STAGE_ORDER: KnockoutMatchRow['stage'][] = ['quarter_final', 'semi_final', 'final', 'third_place'];
 
 export function Bracket({ matches = [], qualifyingCount = 4 }: { matches?: KnockoutMatchRow[]; qualifyingCount?: number }) {
   if (matches.length === 0) {
