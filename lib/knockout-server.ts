@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   canTransition,
   computeNextKnockoutRound,
+  computeThirdPlacePlayoff,
   isKnockoutRoundComplete,
   nextKnockoutStage,
 } from './tournament';
@@ -40,13 +41,36 @@ export interface KnockoutProgressResult {
   warning?: string;
 }
 
+function affectedMatchWarning(count: number) {
+  return `That result changed who advances, so ${count} later ${
+    count === 1 ? 'match was' : 'matches were'
+  } reset and need replaying.`;
+}
+
+function isCompleteStage(matches: Match[], stage: MatchStage) {
+  const stageMatches = matches.filter((match) => match.stage === stage);
+  return stageMatches.length > 0 && isKnockoutRoundComplete(stageMatches);
+}
+
+async function maybeCompleteTournament(
+  supabase: AdminClient,
+  tournamentId: string,
+  knockoutMatches: Match[],
+  thirdPlacePlayoff: boolean,
+) {
+  if (!isCompleteStage(knockoutMatches, 'final')) return;
+  if (thirdPlacePlayoff && !isCompleteStage(knockoutMatches, 'third_place')) return;
+  await setTournamentStatus(supabase, tournamentId, 'complete');
+}
+
 /**
  * Advance or flag the knockout bracket after a match in `stage` was scored.
  *
  * - When the round is complete, draw the next round — inserting it, or updating
  *   an existing next round in place. If a previously decided result changed who
  *   advances, the dependent match is reset and the caller is warned.
- * - When the final is decided, move the tournament to `complete`.
+ * - When the final is decided, move the tournament to `complete`; if a
+ *   third-place playoff is enabled, wait for that result too.
  */
 export async function progressKnockout(
   supabase: AdminClient,
@@ -64,11 +88,15 @@ export async function progressKnockout(
 
   const knockoutMatches = data as Match[];
 
-  if (stage === 'final') {
-    const final = knockoutMatches.find((match) => match.stage === 'final');
-    if (final && isKnockoutRoundComplete([final])) {
-      await setTournamentStatus(supabase, tournamentId, 'complete');
-    }
+  const { data: tournament } = await supabase
+    .from('tournaments')
+    .select('third_place_playoff')
+    .eq('id', tournamentId)
+    .single();
+  const thirdPlacePlayoff = Boolean(tournament?.third_place_playoff);
+
+  if (stage === 'final' || stage === 'third_place') {
+    await maybeCompleteTournament(supabase, tournamentId, knockoutMatches, thirdPlacePlayoff);
     return {};
   }
 
@@ -81,11 +109,15 @@ export async function progressKnockout(
   let fixtures;
   try {
     fixtures = computeNextKnockoutRound(stage, stageMatches);
+    if (stage === 'semi_final' && thirdPlacePlayoff) {
+      fixtures = [...fixtures, ...computeThirdPlacePlayoff(stageMatches)];
+    }
   } catch {
     return {};
   }
 
-  const existingNext = knockoutMatches.filter((match) => match.stage === nextStage);
+  const fixtureStages = new Set(fixtures.map((fixture) => fixture.stage));
+  const existingNext = knockoutMatches.filter((match) => fixtureStages.has(match.stage as Exclude<MatchStage, 'group'>));
 
   if (existingNext.length === 0) {
     const rows = fixtures.map((fixture) => ({
@@ -102,7 +134,7 @@ export async function progressKnockout(
 
   let flagged = 0;
   for (const fixture of fixtures) {
-    const target = existingNext.find((match) => match.round_number === fixture.round);
+    const target = existingNext.find((match) => match.stage === fixture.stage && match.round_number === fixture.round);
     if (!target) {
       await supabase.from('matches').insert({
         tournament_id: tournamentId,
@@ -133,12 +165,24 @@ export async function progressKnockout(
   }
 
   if (flagged > 0) {
+    let staleDownstreamCount = 0;
+    if (stage === 'quarter_final') {
+      const staleDownstream = knockoutMatches.filter((match) => match.stage === 'final' || match.stage === 'third_place');
+      staleDownstreamCount = staleDownstream.length;
+
+      if (staleDownstreamCount > 0) {
+        await supabase
+          .from('matches')
+          .delete()
+          .eq('tournament_id', tournamentId)
+          .in('stage', ['final', 'third_place']);
+      }
+    }
+
     // A later round was rebuilt, so the tournament can no longer be complete.
     await setTournamentStatus(supabase, tournamentId, 'knockout_stage');
     return {
-      warning: `That result changed who advances, so ${flagged} later ${
-        flagged === 1 ? 'match was' : 'matches were'
-      } reset and need replaying.`,
+      warning: affectedMatchWarning(flagged + staleDownstreamCount),
     };
   }
 

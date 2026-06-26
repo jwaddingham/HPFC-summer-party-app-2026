@@ -96,7 +96,7 @@ function getNextMatchSummary(matches: Match[], teamNames: Map<string, string>) {
   if (!next) return null;
   const home = teamNames.get(next.home_team_id) ?? 'TBD';
   const away = teamNames.get(next.away_team_id) ?? 'TBD';
-  return `Round ${next.round_number}: ${home} v ${away}`;
+  return `${matchDisplayLabel(next)}: ${home} v ${away}`;
 }
 
 function getWinner(tournament: Tournament, matches: Match[], teamNames: Map<string, string>) {
@@ -124,14 +124,20 @@ function toFixtureRow(match: Match, teamNames: Map<string, string>, liveMatchId:
     homeScore: match.home_score,
     awayScore: match.away_score,
     status: toFixtureStatus(match, liveMatchId),
-    time: isCancelled ? 'Cancelled' : `Round ${match.round_number}`,
+    time: isCancelled ? 'Cancelled' : matchDisplayLabel(match),
   };
 }
 
 function stageLabel(stage: Exclude<MatchStage, 'group'>, round: number) {
   if (stage === 'quarter_final') return `Quarter-final ${round}`;
   if (stage === 'semi_final') return `Semi-final ${round}`;
+  if (stage === 'third_place') return '3rd/4th playoff';
   return 'Final';
+}
+
+export function matchDisplayLabel(match: Pick<Match, 'stage' | 'round_number'>) {
+  if (match.stage === 'group') return `Round ${match.round_number}`;
+  return stageLabel(match.stage, match.round_number);
 }
 
 function toKnockoutMatchRow(match: Match, teamNames: Map<string, string>, liveMatchId: string | null): KnockoutMatchRow {
@@ -149,6 +155,7 @@ function sortMatches(matches: Match[]) {
     quarter_final: 1,
     semi_final: 2,
     final: 3,
+    third_place: 4,
   };
 
   return [...matches].sort((a, b) => stageOrder[a.stage] - stageOrder[b.stage] || a.round_number - b.round_number);
@@ -195,7 +202,7 @@ export async function getTournamentSummaries(): Promise<TournamentSummary[]> {
   const supabase = getSupabasePublicClient();
   const { data: tournaments, error: tournamentsError } = await supabase
     .from('tournaments')
-    .select('id, name, status, knockout_mode, created_at')
+    .select('id, name, status, knockout_mode, third_place_playoff, created_at')
     .order('created_at', { ascending: false });
 
   if (tournamentsError) throw new Error(tournamentsError.message);
@@ -226,7 +233,7 @@ export async function getTournamentDetail(id: string): Promise<TournamentDetail 
   const supabase = getSupabasePublicClient();
   const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: matches, error: matchesError }] =
     await Promise.all([
-      supabase.from('tournaments').select('id, name, status, knockout_mode, created_at').eq('id', id).single(),
+      supabase.from('tournaments').select('id, name, status, knockout_mode, third_place_playoff, created_at').eq('id', id).single(),
       supabase.from('teams').select('id, tournament_id, name').eq('tournament_id', id).order('name', { ascending: true }),
       supabase
         .from('matches')

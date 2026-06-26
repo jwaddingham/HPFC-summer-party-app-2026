@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const { error: statusError } = await supabase
       .from('tournaments')
-      .update({ status: 'group_stage' })
+      .update({ status: 'group_stage', third_place_playoff: false })
       .eq('id', id);
 
     if (statusError) return NextResponse.json({ error: statusError.message }, { status: 500 });

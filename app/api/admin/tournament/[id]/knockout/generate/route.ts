@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const { data: tournament, error: tournamentError } = await supabase
       .from('tournaments')
-      .select('id, status, knockout_mode')
+      .select('id, status, knockout_mode, third_place_playoff')
       .eq('id', id)
       .single();
 
@@ -67,6 +67,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!KNOCKOUT_MODES.includes(mode)) {
       return NextResponse.json({ error: 'Unknown knockout mode.' }, { status: 400 });
     }
+    const thirdPlacePlayoff =
+      typeof body.thirdPlacePlayoff === 'boolean'
+        ? body.thirdPlacePlayoff
+        : Boolean(tournament.third_place_playoff);
 
     const teamList = (teams ?? []) as Team[];
     const teamIds = new Set(teamList.map((team) => team.id));
@@ -111,12 +115,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const { error: statusError } = await supabase
       .from('tournaments')
-      .update({ status: 'knockout_stage', knockout_mode: mode })
+      .update({ status: 'knockout_stage', knockout_mode: mode, third_place_playoff: thirdPlacePlayoff })
       .eq('id', id);
 
     if (statusError) return NextResponse.json({ error: statusError.message }, { status: 500 });
 
-    return NextResponse.json({ matches: inserted, mode }, { status: 201 });
+    return NextResponse.json({ matches: inserted, mode, thirdPlacePlayoff }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to generate the knockout bracket.';
     return NextResponse.json({ error: message }, { status: 400 });

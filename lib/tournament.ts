@@ -44,6 +44,12 @@ export function resolveMatchWinner(match: WinnerInput): string | null {
   return null;
 }
 
+export function resolveMatchLoser(match: WinnerInput): string | null {
+  const winner = resolveMatchWinner(match);
+  if (!winner) return null;
+  return winner === match.home_team_id ? match.away_team_id : match.home_team_id;
+}
+
 export type KnockoutFixture = {
   stage: Exclude<MatchStage, 'group'>;
   round: number;
@@ -64,7 +70,7 @@ export function nextKnockoutStage(stage: MatchStage): Exclude<MatchStage, 'group
  * Given every completed match in a knockout round, produce the fixtures for the
  * next round by advancing the winners. Quarter-finals feed two semi-finals
  * (QF1/QF4 and QF2/QF3 by round); semi-finals feed the single final. The final
- * has no next round and returns an empty list.
+ * and third-place playoff have no next round and return an empty list.
  */
 export function computeNextKnockoutRound(stage: MatchStage, stageMatches: Match[]): KnockoutFixture[] {
   const nextStage = NEXT_KNOCKOUT_STAGE[stage];
@@ -95,6 +101,26 @@ export function computeNextKnockoutRound(stage: MatchStage, stageMatches: Match[
   }
 
   return [{ stage: 'final', round: 1, home: winners[0], away: winners[1] }];
+}
+
+export function computeThirdPlacePlayoff(stageMatches: Match[]): KnockoutFixture[] {
+  const sorted = [...stageMatches].sort((a, b) => a.round_number - b.round_number);
+  if (sorted.length !== 2) {
+    throw new Error('The third-place playoff requires two completed semi-finals.');
+  }
+  if (!isKnockoutRoundComplete(sorted)) {
+    throw new Error('Every semi-final needs a winner before the third-place playoff can be drawn.');
+  }
+
+  const losers = sorted.map((current) => {
+    const loser = resolveMatchLoser(current);
+    if (!loser) {
+      throw new Error('Every semi-final needs a winner before the third-place playoff can be drawn.');
+    }
+    return loser;
+  });
+
+  return [{ stage: 'third_place', round: 1, home: losers[0], away: losers[1] }];
 }
 
 /** True when every match in the round is complete and has a resolved winner. */

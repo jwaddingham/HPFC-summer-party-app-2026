@@ -4,10 +4,12 @@ import {
   canTransition,
   assertTransition,
   computeNextKnockoutRound,
+  computeThirdPlacePlayoff,
   generateKnockoutFixtures,
   generateRoundRobin,
   isKnockoutRoundComplete,
   nextKnockoutStage,
+  resolveMatchLoser,
   resolveMatchWinner,
 } from './tournament';
 import { Match, Team } from './types';
@@ -316,6 +318,37 @@ describe('resolveMatchWinner', () => {
   });
 });
 
+describe('resolveMatchLoser', () => {
+  function knockoutMatch(overrides: Partial<Match>): Match {
+    return {
+      id: 'k1',
+      tournament_id: tournamentId,
+      stage: 'semi_final',
+      round_number: 1,
+      home_team_id: 'reds',
+      away_team_id: 'blues',
+      home_score: null,
+      away_score: null,
+      winner_team_id: null,
+      status: 'scheduled',
+      ...overrides,
+    };
+  }
+
+  it('returns the opposite team from the resolved winner', () => {
+    expect(resolveMatchLoser(knockoutMatch({ home_score: 2, away_score: 1 }))).toBe('blues');
+    expect(resolveMatchLoser(knockoutMatch({ home_score: 0, away_score: 3 }))).toBe('reds');
+  });
+
+  it('uses an explicit winner on a level score to identify the loser', () => {
+    expect(resolveMatchLoser(knockoutMatch({ home_score: 1, away_score: 1, winner_team_id: 'blues' }))).toBe('reds');
+  });
+
+  it('returns null until the match has a resolved winner', () => {
+    expect(resolveMatchLoser(knockoutMatch({ home_score: 1, away_score: 1 }))).toBeNull();
+  });
+});
+
 describe('computeNextKnockoutRound', () => {
   function ko(overrides: Partial<Match>): Match {
     return {
@@ -370,6 +403,11 @@ describe('computeNextKnockoutRound', () => {
     expect(nextKnockoutStage('final')).toBeNull();
   });
 
+  it('returns an empty list for the third-place playoff (no next round)', () => {
+    expect(computeNextKnockoutRound('third_place', [ko({ stage: 'third_place' })])).toEqual([]);
+    expect(nextKnockoutStage('third_place')).toBeNull();
+  });
+
   it('throws when a drawn match has no recorded winner', () => {
     expect(() =>
       computeNextKnockoutRound('semi_final', [
@@ -383,6 +421,57 @@ describe('computeNextKnockoutRound', () => {
     expect(() => computeNextKnockoutRound('quarter_final', [ko({ stage: 'quarter_final' })])).toThrow(
       'Semi-finals require four completed quarter-finals.',
     );
+  });
+});
+
+describe('computeThirdPlacePlayoff', () => {
+  function ko(overrides: Partial<Match>): Match {
+    return {
+      id: overrides.id ?? 'k',
+      tournament_id: tournamentId,
+      stage: 'semi_final',
+      round_number: 1,
+      home_team_id: 'a',
+      away_team_id: 'b',
+      home_score: 1,
+      away_score: 0,
+      winner_team_id: null,
+      status: 'complete',
+      ...overrides,
+    };
+  }
+
+  it('draws the two semi-final losers into the 3rd/4th playoff', () => {
+    const playoff = computeThirdPlacePlayoff([
+      ko({ id: 's1', round_number: 1, home_team_id: 'a', away_team_id: 'b', home_score: 2, away_score: 0 }),
+      ko({ id: 's2', round_number: 2, home_team_id: 'c', away_team_id: 'd', home_score: 0, away_score: 1 }),
+    ]);
+
+    expect(playoff).toEqual([{ stage: 'third_place', round: 1, home: 'b', away: 'c' }]);
+  });
+
+  it('uses explicit winners from drawn semi-finals to identify playoff teams', () => {
+    const playoff = computeThirdPlacePlayoff([
+      ko({ id: 's1', round_number: 1, home_team_id: 'a', away_team_id: 'b', home_score: 1, away_score: 1, winner_team_id: 'b' }),
+      ko({ id: 's2', round_number: 2, home_team_id: 'c', away_team_id: 'd', home_score: 2, away_score: 2, winner_team_id: 'c' }),
+    ]);
+
+    expect(playoff).toEqual([{ stage: 'third_place', round: 1, home: 'a', away: 'd' }]);
+  });
+
+  it('requires two completed semi-finals', () => {
+    expect(() => computeThirdPlacePlayoff([ko({ id: 's1' })])).toThrow(
+      'The third-place playoff requires two completed semi-finals.',
+    );
+  });
+
+  it('waits until both semi-finals are complete with resolved winners', () => {
+    expect(() =>
+      computeThirdPlacePlayoff([
+        ko({ id: 's1', round_number: 1 }),
+        ko({ id: 's2', round_number: 2, status: 'scheduled' }),
+      ]),
+    ).toThrow('Every semi-final needs a winner before the third-place playoff can be drawn.');
   });
 });
 
