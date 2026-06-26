@@ -3,24 +3,26 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAdminHeaders } from '@/lib/admin-session';
+import { MAX_TEAM_COUNT, MIN_TEAM_COUNT } from '@/lib/team-validation';
 
-const TEAM_COUNTS = [4, 6, 8] as const;
+const QUICK_TEAM_COUNTS = [4, 5, 6] as const;
 
 export function CreateTournamentForm() {
   const router = useRouter();
   const [name, setName] = useState('');
-  const [teamCount, setTeamCount] = useState<(typeof TEAM_COUNTS)[number]>(4);
+  const [teamCount, setTeamCount] = useState(4);
   const [teamNames, setTeamNames] = useState<string[]>(['', '', '', '']);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const teams = useMemo(() => teamNames.slice(0, teamCount), [teamCount, teamNames]);
 
-  function updateTeamCount(next: (typeof TEAM_COUNTS)[number]) {
-    setTeamCount(next);
+  function updateTeamCount(next: number) {
+    const clamped = Math.min(MAX_TEAM_COUNT, Math.max(MIN_TEAM_COUNT, Math.trunc(next)));
+    setTeamCount(clamped);
     setTeamNames((previous) => {
-      const merged = previous.slice(0, next);
-      while (merged.length < next) merged.push('');
+      const merged = previous.slice(0, clamped);
+      while (merged.length < clamped) merged.push('');
       return merged;
     });
   }
@@ -73,7 +75,7 @@ export function CreateTournamentForm() {
       <div>
         <p className="text-sm font-semibold text-ink mb-3 uppercase tracking-wider">Team count</p>
         <div className="grid grid-cols-3 gap-2">
-          {TEAM_COUNTS.map((count) => (
+          {QUICK_TEAM_COUNTS.map((count) => (
             <button
               key={count}
               className={`border-2 border-ink p-3 font-bold text-sm uppercase tracking-wider transition-all ${
@@ -88,6 +90,23 @@ export function CreateTournamentForm() {
               {count} teams
             </button>
           ))}
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <label htmlFor="custom-team-count" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+            Or set a number
+          </label>
+          <input
+            id="custom-team-count"
+            type="number"
+            inputMode="numeric"
+            min={MIN_TEAM_COUNT}
+            max={MAX_TEAM_COUNT}
+            className="w-20 border-2 border-ink p-2 text-center font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-blood focus:ring-offset-2 transition-all"
+            value={teamCount}
+            onChange={(event) => updateTeamCount(Number(event.target.value))}
+            disabled={saving}
+          />
+          <span className="text-xs text-gray-500">{MIN_TEAM_COUNT}–{MAX_TEAM_COUNT} teams</span>
         </div>
       </div>
 

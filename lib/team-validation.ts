@@ -1,19 +1,24 @@
-const ALLOWED_TEAM_COUNTS = [4, 6, 8] as const;
+export const MIN_TEAM_COUNT = 2;
+export const MAX_TEAM_COUNT = 8;
 const MAX_TEAM_NAME_LENGTH = 32;
 
 export function normalizeTeamName(value: string) {
   return value.trim().replace(/\s+/g, ' ');
 }
 
+export function isAllowedTeamCount(teamCount: number) {
+  return Number.isInteger(teamCount) && teamCount >= MIN_TEAM_COUNT && teamCount <= MAX_TEAM_COUNT;
+}
+
 export function validateTeamCount(teamCount: number) {
-  if (!ALLOWED_TEAM_COUNTS.includes(teamCount as (typeof ALLOWED_TEAM_COUNTS)[number])) {
-    throw new Error('Team count must be 4, 6, or 8.');
+  if (!isAllowedTeamCount(teamCount)) {
+    throw new Error(`Team count must be between ${MIN_TEAM_COUNT} and ${MAX_TEAM_COUNT}.`);
   }
 }
 
 export function validateMutableTeamCount(teamCount: number) {
-  if (teamCount < 4 || teamCount > 8) {
-    throw new Error('Team count must stay between 4 and 8.');
+  if (!isAllowedTeamCount(teamCount)) {
+    throw new Error(`Team count must stay between ${MIN_TEAM_COUNT} and ${MAX_TEAM_COUNT}.`);
   }
 }
 

@@ -291,7 +291,7 @@ export function FixturePanel({
   const [error, setError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const canGenerate = [4, 6, 8].includes(teams.length);
+  const canGenerate = teams.length >= 2 && teams.length <= 8;
   const teamNames = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
   const pendingMatchIds = useMemo(() => new Set(pendingScores.map((score) => score.matchId)), [pendingScores]);
 
@@ -460,7 +460,7 @@ export function FixturePanel({
         <div className="space-y-3">
           <div className="border-2 border-dashed border-ink/40 bg-chalk p-4 text-sm text-gray-700">
             <p className="font-semibold text-ink">Teams saved: {teams.length}</p>
-            <p>Supported tournament sizes are 4, 6, or 8 teams.</p>
+            <p>Supported tournament sizes are 2 to 8 teams (odd numbers play a round-robin with byes).</p>
           </div>
           <Button fullWidth disabled={!canGenerate || isGenerating} onClick={generateFixtures} className="gap-2">
             {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <CalendarPlus className="h-5 w-5" aria-hidden="true" />}
@@ -468,7 +468,7 @@ export function FixturePanel({
           </Button>
           {!canGenerate ? (
             <p className="text-xs font-semibold uppercase tracking-wide text-blood">
-              Add or remove teams until you have 4, 6, or 8 teams.
+              Add or remove teams until you have between 2 and 8 teams.
             </p>
           ) : null}
         </div>

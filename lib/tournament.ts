@@ -129,17 +129,21 @@ export function isKnockoutRoundComplete(stageMatches: Match[]): boolean {
   return stageMatches.every((current) => current.status === 'complete' && resolveMatchWinner(current) !== null);
 }
 
+/** Sentinel slot used to balance an odd field; the team drawn against it sits out. */
+const BYE_SLOT = '__bye__';
+
 export function generateRoundRobin(teamIds: string[]) {
   if (teamIds.length < 2) return [];
   if (new Set(teamIds).size !== teamIds.length) {
     throw new Error('Round-robin generation requires unique team IDs.');
   }
-  if (teamIds.length % 2 !== 0) {
-    throw new Error('Round-robin generation requires an even number of teams.');
-  }
+
+  // An odd number of teams gets a phantom "bye" slot so the circle method still
+  // works: each round, whoever is paired with the bye simply rests. Fixtures
+  // that touch the bye are dropped, leaving a complete single round-robin.
+  const teams = teamIds.length % 2 === 0 ? [...teamIds] : [...teamIds, BYE_SLOT];
 
   const fixtures: Array<{ home: string; away: string; round: number }> = [];
-  const teams = [...teamIds];
   const rounds = teams.length - 1;
   const matchesPerRound = teams.length / 2;
 
@@ -147,6 +151,7 @@ export function generateRoundRobin(teamIds: string[]) {
     for (let matchIndex = 0; matchIndex < matchesPerRound; matchIndex += 1) {
       const first = teams[matchIndex];
       const second = teams[teams.length - 1 - matchIndex];
+      if (first === BYE_SLOT || second === BYE_SLOT) continue;
       const swapHomeAway = (roundIndex + matchIndex) % 2 === 1;
 
       fixtures.push({
@@ -181,14 +186,21 @@ export function generateKnockoutFixtures(orderedTeamIds: string[], mode: 'top4' 
     ];
   }
 
-  if (orderedTeamIds.length !== 4 && orderedTeamIds.length !== 6 && orderedTeamIds.length !== 8) {
-    throw new Error('Top-four mode supports only 4, 6, or 8 teams.');
+  // "Top four" adapts to the field size: four or more teams play two semi-finals
+  // (top four seeds, 1v4 and 2v3); a smaller field sends its top two straight to
+  // a single final.
+  if (orderedTeamIds.length >= 4) {
+    return [
+      { stage: 'semi_final' as const, round: 1, home: orderedTeamIds[0], away: orderedTeamIds[3] },
+      { stage: 'semi_final' as const, round: 2, home: orderedTeamIds[1], away: orderedTeamIds[2] },
+    ];
   }
 
-  return [
-    { stage: 'semi_final' as const, round: 1, home: orderedTeamIds[0], away: orderedTeamIds[3] },
-    { stage: 'semi_final' as const, round: 2, home: orderedTeamIds[1], away: orderedTeamIds[2] },
-  ];
+  if (orderedTeamIds.length >= 2) {
+    return [{ stage: 'final' as const, round: 1, home: orderedTeamIds[0], away: orderedTeamIds[1] }];
+  }
+
+  throw new Error('Knockout generation needs at least two teams.');
 }
 
 interface TableRow {

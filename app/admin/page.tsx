@@ -112,7 +112,7 @@ export default function AdminLogin() {
 
           {/* Info Section */}
           <div className="bg-white border-2 border-line p-4 text-center text-sm text-gray-600">
-            <p>You need an admin code to access tournament management</p>
+            <p>The password is shared in the HPFC Coaches WhatsApp group</p>
           </div>
         </div>
       </div>

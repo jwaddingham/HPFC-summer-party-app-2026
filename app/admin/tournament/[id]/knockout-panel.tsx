@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, Check, Loader2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -37,10 +37,6 @@ function matchLabel(match: Pick<KnockoutMatchRow, 'stage' | 'round_number'>) {
   if (match.stage === 'final') return 'Final';
   if (match.stage === 'third_place') return '3rd/4th playoff';
   return `${STAGE_LABELS[match.stage].slice(0, -1)} ${match.round_number}`;
-}
-
-function hasSameSeedOrder(a: TeamRow[], b: TeamRow[]) {
-  return a.length === b.length && a.every((seed, index) => seed.id === b[index]?.id);
 }
 
 function formatGoalDifference(value: number) {
@@ -240,30 +236,40 @@ function KnockoutDraw({
 }) {
   const router = useRouter();
   const quarterAvailable = teamCount === 8;
+  // Below four teams there are no semi-finals: the top two go straight to a
+  // final, which also means there is no third-place playoff to offer.
+  const semiFinalsAvailable = teamCount >= 4;
   const [mode, setMode] = useState<KnockoutMode>(
     knockoutMode === 'quarter_finals' && quarterAvailable ? 'quarter_finals' : 'top4',
   );
-  const [includeThirdPlace, setIncludeThirdPlace] = useState(thirdPlacePlayoff);
-  const [seeds, setSeeds] = useState<TeamRow[]>(seedOrder);
-  const [hasCustomSeedOrder, setHasCustomSeedOrder] = useState(false);
+  const [includeThirdPlace, setIncludeThirdPlace] = useState(thirdPlacePlayoff && semiFinalsAvailable);
+  // Only the organiser's custom *order* (a list of team ids) lives in state.
+  // Names and P/GD/PTS are always read from the freshest `seedOrder` prop, so a
+  // group score corrected mid-seeding updates the figures even after a reorder.
+  const [customOrderIds, setCustomOrderIds] = useState<string[] | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  const qualifyingCount = mode === 'quarter_finals' ? 8 : 4;
+  const qualifyingCount = mode === 'quarter_finals' ? 8 : Math.min(semiFinalsAvailable ? 4 : 2, teamCount);
 
-  useEffect(() => {
-    if (!hasCustomSeedOrder) {
-      setSeeds(seedOrder);
-    }
-  }, [hasCustomSeedOrder, seedOrder]);
+  const seeds = useMemo<TeamRow[]>(() => {
+    if (!customOrderIds) return seedOrder;
+    const byId = new Map(seedOrder.map((row) => [row.id, row]));
+    const ordered = customOrderIds
+      .map((id) => byId.get(id))
+      .filter((row): row is TeamRow => row !== undefined);
+    // If the roster drifted (team added/removed), fall back to the default order.
+    return ordered.length === seedOrder.length ? ordered : seedOrder;
+  }, [customOrderIds, seedOrder]);
 
   function reorder(from: number, to: number) {
     if (to < 0 || to >= seeds.length) return;
-    const next = [...seeds];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setSeeds(next);
-    setHasCustomSeedOrder(!hasSameSeedOrder(next, seedOrder));
+    const nextIds = seeds.map((seed) => seed.id);
+    const [moved] = nextIds.splice(from, 1);
+    nextIds.splice(to, 0, moved);
+    // Clear the override once it matches the default order so future refreshes flow through.
+    const matchesDefault = nextIds.every((id, index) => id === seedOrder[index]?.id);
+    setCustomOrderIds(matchesDefault ? null : nextIds);
   }
 
   async function generate() {
@@ -311,9 +317,13 @@ function KnockoutDraw({
                 checked={mode === 'top4'}
                 onChange={() => setMode('top4')}
               />
-              Top 4 — semi-finals
+              {semiFinalsAvailable ? 'Top 4 — semi-finals' : 'Top 2 — final'}
             </span>
-            <span className="text-xs text-gray-600">Seeds 1–4 play 1v4 and 2v3, then the final.</span>
+            <span className="text-xs text-gray-600">
+              {semiFinalsAvailable
+                ? 'Seeds 1–4 play 1v4 and 2v3, then the final.'
+                : 'The top two seeds go straight to the final.'}
+            </span>
           </label>
           <label
             className={`flex flex-col gap-1 border-2 p-3 ${
@@ -339,20 +349,23 @@ function KnockoutDraw({
       </div>
 
       <label
-        className={`flex cursor-pointer items-start gap-3 border-2 p-3 ${
-          includeThirdPlace ? 'border-gold bg-gold/10' : 'border-ink/30 bg-white'
-        }`}
+        className={`flex items-start gap-3 border-2 p-3 ${
+          semiFinalsAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+        } ${includeThirdPlace ? 'border-gold bg-gold/10' : 'border-ink/30 bg-white'}`}
       >
         <input
           type="checkbox"
           className="mt-1 h-4 w-4 accent-blood"
           checked={includeThirdPlace}
+          disabled={!semiFinalsAvailable}
           onChange={(event) => setIncludeThirdPlace(event.target.checked)}
         />
         <span className="space-y-1">
           <span className="block font-display uppercase tracking-wide text-ink">Add 3rd/4th playoff</span>
           <span className="block text-xs text-gray-600">
-            After the semi-finals, the two losing teams play once more for third place.
+            {semiFinalsAvailable
+              ? 'After the semi-finals, the two losing teams play once more for third place.'
+              : 'Needs at least four teams (a semi-final round to lose).'}
           </span>
         </span>
       </label>
