@@ -75,7 +75,7 @@ function updateTwoEqSelectSingle(result: unknown) {
 }
 
 describe('admin login route', () => {
-  it('accepts the configured access code and rejects the wrong one', async () => {
+  it('falls back to the env access code when no code is stored in the database', async () => {
     process.env.ADMIN_ACCESS_CODE = 'event-secret';
 
     const accepted = await loginPost(request('POST', '/api/admin/login', { code: 'event-secret' }, false));
@@ -83,6 +83,28 @@ describe('admin login route', () => {
 
     expect(accepted.status).toBe(200);
     expect(rejected.status).toBe(401);
+  });
+
+  it('prefers an access code stored in the database over the env fallback', async () => {
+    process.env.ADMIN_ACCESS_CODE = 'env-code';
+    getSupabaseAdminClientMock.mockReturnValue({
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(async () => ({ data: { value: 'db-code' }, error: null })),
+          })),
+        })),
+      })),
+    });
+
+    const dbAccepted = await loginPost(request('POST', '/api/admin/login', { code: 'db-code' }, false));
+    const envRejected = await loginPost(request('POST', '/api/admin/login', { code: 'env-code' }, false));
+
+    expect(dbAccepted.status).toBe(200);
+    expect(envRejected.status).toBe(401);
+
+    // Avoid leaking this mock implementation into later tests.
+    getSupabaseAdminClientMock.mockReset();
   });
 });
 
