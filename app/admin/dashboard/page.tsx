@@ -1,34 +1,20 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, Plus, LogOut } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { AdminGuard } from '@/components/admin/AdminGuard';
-import { clearAdminSession } from '@/lib/admin-session';
+import { AdminModeActions } from '@/components/admin/AdminModeActions';
 
 export default function AdminDashboard() {
-  const router = useRouter();
-
-  function logout() {
-    clearAdminSession();
-    router.push('/admin');
-  }
-
   return (
     <AdminGuard>
       <div className="min-h-screen bg-chalk">
       {/* Header */}
       <div className="bg-ink text-white pt-12 pb-8 px-4">
-        <div className="flex justify-between items-center mb-1">
+        <div className="mb-3 flex items-start justify-between gap-3">
           <h1 className="font-display text-3xl tracking-wider">
             MATCHDAY CONTROL
           </h1>
-          <button
-            onClick={logout}
-            className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-gray-600 transition-colors"
-            aria-label="Log out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <AdminModeActions />
         </div>
         <p className="text-sm text-gray-400">Logged in as organiser</p>
       </div>
