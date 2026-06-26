@@ -236,16 +236,19 @@ function KnockoutDraw({
 }) {
   const router = useRouter();
   const quarterAvailable = teamCount === 8;
+  // Below four teams there are no semi-finals: the top two go straight to a
+  // final, which also means there is no third-place playoff to offer.
+  const semiFinalsAvailable = teamCount >= 4;
   const [mode, setMode] = useState<KnockoutMode>(
     knockoutMode === 'quarter_finals' && quarterAvailable ? 'quarter_finals' : 'top4',
   );
-  const [includeThirdPlace, setIncludeThirdPlace] = useState(thirdPlacePlayoff);
+  const [includeThirdPlace, setIncludeThirdPlace] = useState(thirdPlacePlayoff && semiFinalsAvailable);
   const [seeds, setSeeds] = useState<TeamRow[]>(seedOrder);
   const [hasCustomSeedOrder, setHasCustomSeedOrder] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  const qualifyingCount = mode === 'quarter_finals' ? 8 : 4;
+  const qualifyingCount = mode === 'quarter_finals' ? 8 : Math.min(semiFinalsAvailable ? 4 : 2, teamCount);
 
   useEffect(() => {
     if (!hasCustomSeedOrder) {
@@ -307,9 +310,13 @@ function KnockoutDraw({
                 checked={mode === 'top4'}
                 onChange={() => setMode('top4')}
               />
-              Top 4 — semi-finals
+              {semiFinalsAvailable ? 'Top 4 — semi-finals' : 'Top 2 — final'}
             </span>
-            <span className="text-xs text-gray-600">Seeds 1–4 play 1v4 and 2v3, then the final.</span>
+            <span className="text-xs text-gray-600">
+              {semiFinalsAvailable
+                ? 'Seeds 1–4 play 1v4 and 2v3, then the final.'
+                : 'The top two seeds go straight to the final.'}
+            </span>
           </label>
           <label
             className={`flex flex-col gap-1 border-2 p-3 ${
@@ -335,20 +342,23 @@ function KnockoutDraw({
       </div>
 
       <label
-        className={`flex cursor-pointer items-start gap-3 border-2 p-3 ${
-          includeThirdPlace ? 'border-gold bg-gold/10' : 'border-ink/30 bg-white'
-        }`}
+        className={`flex items-start gap-3 border-2 p-3 ${
+          semiFinalsAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+        } ${includeThirdPlace ? 'border-gold bg-gold/10' : 'border-ink/30 bg-white'}`}
       >
         <input
           type="checkbox"
           className="mt-1 h-4 w-4 accent-blood"
           checked={includeThirdPlace}
+          disabled={!semiFinalsAvailable}
           onChange={(event) => setIncludeThirdPlace(event.target.checked)}
         />
         <span className="space-y-1">
           <span className="block font-display uppercase tracking-wide text-ink">Add 3rd/4th playoff</span>
           <span className="block text-xs text-gray-600">
-            After the semi-finals, the two losing teams play once more for third place.
+            {semiFinalsAvailable
+              ? 'After the semi-finals, the two losing teams play once more for third place.'
+              : 'Needs at least four teams (a semi-final round to lose).'}
           </span>
         </span>
       </label>

@@ -183,6 +183,39 @@ describe('generateRoundRobin', () => {
     }
   });
 
+  it('generates a full round-robin for an odd field of 5 using byes', () => {
+    const teams = ['t1', 't2', 't3', 't4', 't5'];
+    const fixtures = generateRoundRobin(teams);
+    const pairings = new Set(fixtures.map((fixture) => [fixture.home, fixture.away].sort().join(':')));
+
+    // C(5,2) = 10 unique pairings, every pairing exactly once, no bye sentinel leaks.
+    expect(fixtures).toHaveLength(10);
+    expect(pairings.size).toBe(10);
+    expect(fixtures.some((fixture) => fixture.home.includes('bye') || fixture.away.includes('bye'))).toBe(false);
+
+    // Five rounds, and no team appears twice within a round (each rests once).
+    expect([...new Set(fixtures.map((fixture) => fixture.round))].sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5]);
+    for (const round of [1, 2, 3, 4, 5]) {
+      const teamsInRound = fixtures
+        .filter((fixture) => fixture.round === round)
+        .flatMap((fixture) => [fixture.home, fixture.away]);
+      expect(new Set(teamsInRound).size).toBe(teamsInRound.length);
+    }
+  });
+
+  it('generates a single match for two teams', () => {
+    const fixtures = generateRoundRobin(['t1', 't2']);
+    expect(fixtures).toHaveLength(1);
+    expect([fixtures[0].home, fixtures[0].away].sort()).toEqual(['t1', 't2']);
+  });
+
+  it('generates a full round-robin for an odd field of 7', () => {
+    const fixtures = generateRoundRobin(['t1', 't2', 't3', 't4', 't5', 't6', 't7']);
+    const pairings = new Set(fixtures.map((fixture) => [fixture.home, fixture.away].sort().join(':')));
+    expect(fixtures).toHaveLength(21); // C(7,2)
+    expect(pairings.size).toBe(21);
+  });
+
   it('throws when team IDs are duplicated', () => {
     expect(() => generateRoundRobin(['t1', 't2', 't2', 't4'])).toThrow(
       'Round-robin generation requires unique team IDs.',
@@ -226,10 +259,28 @@ describe('generateKnockoutFixtures', () => {
     expect(generateKnockoutFixtures(seeds, 'quarter_finals')).toEqual(generateKnockoutFixtures(seeds, 'quarter_finals'));
   });
 
-  it('throws for unsupported top-four team counts', () => {
-    expect(() => generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5'], 'top4')).toThrow(
-      'Top-four mode supports only 4, 6, or 8 teams.',
-    );
+  it('generates top-four semi-finals for odd fields of five or more', () => {
+    expect(generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5'], 'top4')).toEqual([
+      { stage: 'semi_final', round: 1, home: 't1', away: 't4' },
+      { stage: 'semi_final', round: 2, home: 't2', away: 't3' },
+    ]);
+    expect(generateKnockoutFixtures(['t1', 't2', 't3', 't4', 't5', 't6', 't7'], 'top4')).toEqual([
+      { stage: 'semi_final', round: 1, home: 't1', away: 't4' },
+      { stage: 'semi_final', round: 2, home: 't2', away: 't3' },
+    ]);
+  });
+
+  it('sends the top two straight to a final when there are fewer than four teams', () => {
+    expect(generateKnockoutFixtures(['t1', 't2', 't3'], 'top4')).toEqual([
+      { stage: 'final', round: 1, home: 't1', away: 't2' },
+    ]);
+    expect(generateKnockoutFixtures(['t1', 't2'], 'top4')).toEqual([
+      { stage: 'final', round: 1, home: 't1', away: 't2' },
+    ]);
+  });
+
+  it('throws when there are not enough teams for a knockout', () => {
+    expect(() => generateKnockoutFixtures(['t1'], 'top4')).toThrow('Knockout generation needs at least two teams.');
   });
 
   it('throws when quarter-final mode does not have exactly 8 teams', () => {

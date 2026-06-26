@@ -140,7 +140,7 @@ export function ManageTeams({
             <button
               className="h-11 w-11 border-2 border-blood text-blood p-2 font-bold text-xs uppercase tracking-wider disabled:opacity-50"
               onClick={() => removeTeam(team.id)}
-              disabled={locked || teams.length <= 4 || saving}
+              disabled={locked || teams.length <= 2 || saving}
               type="button"
               aria-label="Remove team"
               title="Remove team"

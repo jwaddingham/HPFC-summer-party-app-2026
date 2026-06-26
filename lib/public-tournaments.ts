@@ -87,8 +87,10 @@ function toLeagueRows(teams: Team[], matches: Match[]): LeagueRow[] {
   }));
 }
 
-function getQualifyingCount(tournament: Pick<Tournament, 'knockout_mode'>) {
-  return tournament.knockout_mode === 'quarter_finals' ? 8 : 4;
+function getQualifyingCount(tournament: Pick<Tournament, 'knockout_mode'>, teamCount: number) {
+  if (tournament.knockout_mode === 'quarter_finals') return 8;
+  // Top-four shrinks to a top-two final when there aren't four teams.
+  return Math.min(teamCount >= 4 ? 4 : 2, teamCount);
 }
 
 function getNextMatchSummary(matches: Match[], teamNames: Map<string, string>) {
@@ -189,7 +191,7 @@ function toDetail(tournament: Tournament, teams: Team[], matches: Match[]): Tour
   return {
     ...toSummary(tournament, teams, sortedMatches),
     displayName: tournament.name.toUpperCase(),
-    qualifyingCount: getQualifyingCount(tournament),
+    qualifyingCount: getQualifyingCount(tournament, teams.length),
     table: toLeagueRows(teams, sortedMatches),
     fixtures: groupMatches.map((match) => toFixtureRow(match, teamNames, liveMatchId)),
     knockoutMatches: knockoutMatches.map((match) => toKnockoutMatchRow(match, teamNames, liveMatchId)),
