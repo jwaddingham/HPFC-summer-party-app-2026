@@ -49,7 +49,13 @@ export default async function AdminTournamentPage({ params }: { params: Promise<
   const hasCompletedMatches = allMatches.some((match) => match.status === 'complete');
   const groupComplete = groupMatches.length > 0 && groupMatches.every((match) => match.status !== 'scheduled');
   // Default seeding follows the group table; the panel lets organisers reorder.
-  const seedOrder = buildTable(teamList, groupMatches).map((row) => ({ id: row.teamId, name: row.team }));
+  const seedOrder = buildTable(teamList, groupMatches).map((row) => ({
+    id: row.teamId,
+    name: row.team,
+    played: row.played,
+    goalDifference: row.gd,
+    points: row.points,
+  }));
 
   return (
     <AdminGuard>

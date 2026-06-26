@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Loader2, Trophy } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, Loader2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { getAdminHeaders } from '@/lib/admin-session';
 import type { TournamentStatus } from '@/lib/types';
@@ -10,7 +10,7 @@ import type { TournamentStatus } from '@/lib/types';
 type KnockoutMode = 'top4' | 'quarter_finals';
 type KnockoutStage = 'quarter_final' | 'semi_final' | 'third_place' | 'final';
 
-type TeamRow = { id: string; name: string };
+type TeamRow = { id: string; name: string; played: number; goalDifference: number; points: number };
 
 export type KnockoutMatchRow = {
   id: string;
@@ -41,6 +41,10 @@ function matchLabel(match: Pick<KnockoutMatchRow, 'stage' | 'round_number'>) {
 
 function hasSameSeedOrder(a: TeamRow[], b: TeamRow[]) {
   return a.length === b.length && a.every((seed, index) => seed.id === b[index]?.id);
+}
+
+function formatGoalDifference(value: number) {
+  return value > 0 ? `+${value}` : String(value);
 }
 
 function ScoreStepper({
@@ -371,13 +375,21 @@ function KnockoutDraw({
         <p className="text-xs text-gray-600">
           Defaults to the group table. Reorder to override before drawing the bracket.
         </p>
-        <ol className="space-y-2">
+        <div className="hidden grid-cols-[2rem_minmax(0,1fr)_2.25rem_3rem_3rem_5.75rem] items-center gap-2 border-2 border-ink bg-ink px-2 py-2 font-display text-sm uppercase tracking-wider text-white sm:grid">
+          <span className="text-center">#</span>
+          <span>Team</span>
+          <span className="text-center">P</span>
+          <span className="text-center">GD</span>
+          <span className="text-center text-gold">PTS</span>
+          <span className="text-center">Move</span>
+        </div>
+        <ol className="space-y-2 sm:space-y-0">
           {seeds.map((seed, index) => {
             const qualifies = index < qualifyingCount;
             return (
               <li
                 key={seed.id}
-                className={`grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 border-2 p-2 ${
+                className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-2 border-2 p-2 sm:grid-cols-[2rem_minmax(0,1fr)_2.25rem_3rem_3rem_5.75rem] ${
                   qualifies ? 'border-ink bg-white' : 'border-ink/20 bg-chalk text-gray-500'
                 }`}
               >
@@ -386,26 +398,42 @@ function KnockoutDraw({
                   {seed.name}
                   {!qualifies ? <span className="ml-2 text-xs uppercase tracking-wide">(out)</span> : null}
                 </span>
-                <button
-                  type="button"
-                  className="border-2 border-ink p-2 font-bold text-xs uppercase disabled:opacity-40"
-                  onClick={() => reorder(index, index - 1)}
-                  disabled={index === 0}
-                  aria-label={`Move ${seed.name} up`}
-                  title="Move up"
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="border-2 border-ink p-2 font-bold text-xs uppercase disabled:opacity-40"
-                  onClick={() => reorder(index, index + 1)}
-                  disabled={index === seeds.length - 1}
-                  aria-label={`Move ${seed.name} down`}
-                  title="Move down"
-                >
-                  ↓
-                </button>
+                <dl className="col-span-3 grid grid-cols-3 gap-2 border-t border-ink/10 pt-2 sm:col-span-1 sm:contents sm:border-0 sm:pt-0">
+                  <div className="text-center">
+                    <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-gray-500 sm:hidden">P</dt>
+                    <dd className="text-sm font-semibold tabular-nums">{seed.played}</dd>
+                  </div>
+                  <div className="text-center">
+                    <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-gray-500 sm:hidden">GD</dt>
+                    <dd className="text-sm font-semibold tabular-nums">{formatGoalDifference(seed.goalDifference)}</dd>
+                  </div>
+                  <div className="text-center">
+                    <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-gray-500 sm:hidden">PTS</dt>
+                    <dd className="font-display text-lg text-ink tabular-nums">{seed.points}</dd>
+                  </div>
+                </dl>
+                <div className="col-start-3 row-start-1 flex items-center justify-end gap-2 sm:col-start-auto sm:row-start-auto">
+                  <button
+                    type="button"
+                    className="flex h-9 w-9 items-center justify-center border-2 border-ink bg-white text-ink transition-colors active:bg-ink active:text-white disabled:border-ink/30 disabled:text-ink/30"
+                    onClick={() => reorder(index, index - 1)}
+                    disabled={index === 0}
+                    aria-label={`Move ${seed.name} up`}
+                    title="Move up"
+                  >
+                    <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="flex h-9 w-9 items-center justify-center border-2 border-ink bg-white text-ink transition-colors active:bg-ink active:text-white disabled:border-ink/30 disabled:text-ink/30"
+                    onClick={() => reorder(index, index + 1)}
+                    disabled={index === seeds.length - 1}
+                    aria-label={`Move ${seed.name} down`}
+                    title="Move down"
+                  >
+                    <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
               </li>
             );
           })}
