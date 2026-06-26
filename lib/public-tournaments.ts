@@ -96,7 +96,7 @@ function getNextMatchSummary(matches: Match[], teamNames: Map<string, string>) {
   if (!next) return null;
   const home = teamNames.get(next.home_team_id) ?? 'TBD';
   const away = teamNames.get(next.away_team_id) ?? 'TBD';
-  return `Round ${next.round_number}: ${home} v ${away}`;
+  return `${matchDisplayLabel(next)}: ${home} v ${away}`;
 }
 
 function getWinner(tournament: Tournament, matches: Match[], teamNames: Map<string, string>) {
@@ -124,7 +124,7 @@ function toFixtureRow(match: Match, teamNames: Map<string, string>, liveMatchId:
     homeScore: match.home_score,
     awayScore: match.away_score,
     status: toFixtureStatus(match, liveMatchId),
-    time: isCancelled ? 'Cancelled' : `Round ${match.round_number}`,
+    time: isCancelled ? 'Cancelled' : matchDisplayLabel(match),
   };
 }
 
@@ -133,6 +133,11 @@ function stageLabel(stage: Exclude<MatchStage, 'group'>, round: number) {
   if (stage === 'semi_final') return `Semi-final ${round}`;
   if (stage === 'third_place') return '3rd/4th playoff';
   return 'Final';
+}
+
+export function matchDisplayLabel(match: Pick<Match, 'stage' | 'round_number'>) {
+  if (match.stage === 'group') return `Round ${match.round_number}`;
+  return stageLabel(match.stage, match.round_number);
 }
 
 function toKnockoutMatchRow(match: Match, teamNames: Map<string, string>, liveMatchId: string | null): KnockoutMatchRow {
