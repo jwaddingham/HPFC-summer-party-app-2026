@@ -32,13 +32,19 @@ export function AdminTournamentList({ tournaments }: { tournaments: TournamentSu
       body: JSON.stringify({ confirm: 'DELETE_TOURNAMENT' }),
     });
 
-    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    const body = (await response.json().catch(() => ({}))) as { error?: string; deletedTournament?: string; deletedMatches?: number };
     setDeletingId(null);
 
     if (!response.ok) {
       setError(body.error ?? `Could not delete ${tournament.name}.`);
       return;
     }
+
+    pendo.track('tournament_deleted', {
+      tournament_id: tournament.id,
+      tournament_name: tournament.name,
+      deleted_matches: body.deletedMatches ?? 0,
+    });
 
     setVisibleTournaments((current) => current.filter((item) => item.id !== tournament.id));
     setConfirmingId(null);
