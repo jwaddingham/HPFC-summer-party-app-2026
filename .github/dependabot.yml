@@ -10,6 +10,9 @@ updates:
         update-types:
           - minor
           - patch
+      major:
+        update-types:
+          - major
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -19,3 +22,6 @@ updates:
         update-types:
           - minor
           - patch
+      actions-major:
+        update-types:
+          - major
